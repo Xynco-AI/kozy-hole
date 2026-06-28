@@ -4,9 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  // Optional auth: if CRON_SECRET is configured, require Vercel's bearer header.
+  // Fail closed: a missing/blank secret rejects. CRON_SECRET MUST be set in
+  // Vercel for the cron to run (Vercel auto-sends it as the bearer token).
   const secret = process.env.CRON_SECRET
-  if (secret && req.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
     return new NextResponse('unauthorized', { status: 401 })
   }
   try {

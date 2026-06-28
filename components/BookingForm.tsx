@@ -7,6 +7,7 @@ import CabinPicker, { type CabinOption } from "@/components/booking/CabinPicker"
 import QuotePanel from "@/components/booking/QuotePanel";
 import WaiverBox from "@/components/booking/WaiverBox";
 import { quote, validateStay } from "@/lib/pricing";
+import { parseLocalDate } from "@/lib/dates";
 import { createBookingRequest } from "@/app/book/actions";
 
 // ---------------------------------------------------------------------------
@@ -122,10 +123,7 @@ export default function BookingForm({ cabins, previewMode }: Props) {
 
   const stayError = useMemo(() => {
     if (!checkIn || !checkOut) return null;
-    return validateStay(
-      new Date(checkIn + "T00:00:00"),
-      new Date(checkOut + "T00:00:00"),
-    );
+    return validateStay(parseLocalDate(checkIn), parseLocalDate(checkOut));
   }, [checkIn, checkOut]);
 
   const validDates = checkIn && checkOut && !stayError;
@@ -133,18 +131,22 @@ export default function BookingForm({ cabins, previewMode }: Props) {
   const liveQuote = useMemo(() => {
     if (!validDates || selectedCabinIds.length === 0) return null;
     return quote(
-      new Date(checkIn + "T00:00:00"),
-      new Date(checkOut + "T00:00:00"),
+      parseLocalDate(checkIn),
+      parseLocalDate(checkOut),
       selectedCabinIds.length,
     );
   }, [validDates, checkIn, checkOut, selectedCabinIds.length]);
 
-  // Checkout min = day after check-in
+  // Checkout min = day after check-in. Build the YYYY-MM-DD from local
+  // components so it never shifts across a UTC boundary.
   const checkOutMin = useMemo(() => {
     if (!checkIn) return seasonMin;
-    const d = new Date(checkIn + "T00:00:00");
+    const d = parseLocalDate(checkIn);
     d.setDate(d.getDate() + 1);
-    return d.toISOString().slice(0, 10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }, [checkIn, seasonMin]);
 
   const stayErrorMessage = useMemo(() => {

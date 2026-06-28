@@ -4,11 +4,42 @@ import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
 import { sendConfirmation } from '@/lib/email'
+import { approveBooking, declineBooking } from '@/lib/booking-approval'
 
 function secretOk(secret: string | null): boolean {
   const env = process.env.OWNER_DASHBOARD_SECRET
   if (!env || !secret) return false
   return safeEqual(secret, env)
+}
+
+// ─── ownerApprove ─────────────────────────────────────────────────────────────
+export async function ownerApprove(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  const bookingId = formData.get('bookingId') as string | null
+  if (!secretOk(secret) || !bookingId) return
+
+  try {
+    await approveBooking(bookingId)
+  } catch {
+    // swallow — UI will be stale until next refresh
+  }
+
+  revalidatePath('/owner/' + secret)
+}
+
+// ─── ownerDecline ─────────────────────────────────────────────────────────────
+export async function ownerDecline(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  const bookingId = formData.get('bookingId') as string | null
+  if (!secretOk(secret) || !bookingId) return
+
+  try {
+    await declineBooking(bookingId)
+  } catch {
+    // swallow
+  }
+
+  revalidatePath('/owner/' + secret)
 }
 
 // ─── confirmEtransfer ─────────────────────────────────────────────────────────
@@ -49,6 +80,7 @@ export async function markCompleted(formData: FormData): Promise<void> {
       .from('bookings')
       .update({ status: 'COMPLETED' })
       .eq('id', bookingId)
+      .eq('status', 'CONFIRMED')
   } catch {
     // swallow
   }

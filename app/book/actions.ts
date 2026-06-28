@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { quote, validateStay } from '@/lib/pricing'
 import { isCabinAvailable, DateRange } from '@/lib/availability'
 import { generateToken } from '@/lib/tokens'
+import { parseLocalDate } from '@/lib/dates'
 import { sendOwnerRequestAlert } from '@/lib/email'
 
 const schema = z.object({
@@ -23,11 +24,15 @@ const schema = z.object({
 
 export async function createBookingRequest(input: unknown) {
   const data = schema.parse(input)
-  const checkIn = new Date(data.checkIn + 'T00:00:00')
-  const checkOut = new Date(data.checkOut + 'T00:00:00')
+  const checkIn = parseLocalDate(data.checkIn)
+  const checkOut = parseLocalDate(data.checkOut)
 
   const stayError = validateStay(checkIn, checkOut)
   if (stayError) return { ok: false, error: stayError }
+
+  // TODO(phase2): the availability check below is not transactional — two
+  // simultaneous requests for the same cabin/dates can both pass. Known v1
+  // limitation; wrap in an advisory lock / serializable transaction in phase 2.
 
   const db = supabaseAdmin()
   const requested: DateRange = { checkIn, checkOut }
@@ -69,6 +74,7 @@ export async function createBookingRequest(input: unknown) {
     gst: q.gst,
     total: q.total,
     deposit_amount: q.deposit,
+    card_charge: q.cardCharge,
     status: 'REQUESTED',
     approval_token: approvalToken,
     addons: data.addons,

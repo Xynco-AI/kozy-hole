@@ -5,6 +5,7 @@ import Container from "@/components/Container";
 import Button from "@/components/Button";
 import { supabaseAdmin } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
+import { formatDate, parseLocalDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +23,13 @@ function money(n: number): string {
 
 // ─── tiny helpers ─────────────────────────────────────────────────────────────
 function nightsBetween(checkIn: string, checkOut: string): number {
-  const a = new Date(checkIn);
-  const b = new Date(checkOut);
+  const a = parseLocalDate(checkIn);
+  const b = parseLocalDate(checkOut);
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function fmtDate(d: string): string {
-  return new Date(d).toLocaleDateString("en-CA", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatDate(d);
 }
 
 // ─── page ─────────────────────────────────────────────────────────────────────
@@ -141,10 +138,9 @@ export default async function BookingPage({
                 <span className="text-ink">
                   {fmtDate(b.check_in)} &rarr; {fmtDate(b.check_out)}
                 </span>
-                . We&apos;ll review it and email you at{" "}
-                <span className="text-ink">{b.email}</span> as soon as
-                it&apos;s approved — usually quickly. Your dates are on hold in
-                the meantime.
+                . We&apos;ll review it and email you as soon as it&apos;s
+                approved — usually quickly. Your dates are on hold in the
+                meantime.
               </p>
               <MiniSummary />
             </div>

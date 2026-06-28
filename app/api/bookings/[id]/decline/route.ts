@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
+import { declineBooking } from '@/lib/booking-approval'
 
 export async function GET(
   req: NextRequest,
@@ -13,6 +14,6 @@ export async function GET(
   if (!b || !safeEqual(token, b.approval_token)) {
     return new NextResponse('Invalid or expired link', { status: 403 })
   }
-  await db.from('bookings').update({ status: 'DECLINED' }).eq('id', b.id).eq('status', 'REQUESTED')
+  await declineBooking(id)
   return new NextResponse('Booking declined. The dates are released.', { status: 200 })
 }

@@ -4,7 +4,10 @@ import Container from '@/components/Container'
 import Button from '@/components/Button'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
+import { formatDate } from '@/lib/dates'
 import {
+  ownerApprove,
+  ownerDecline,
   confirmEtransfer,
   markCompleted,
   approveReview,
@@ -24,12 +27,7 @@ function money(n: number | string | null): string {
 }
 
 function fmtDate(d: string): string {
-  return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
+  return formatDate(d)
 }
 
 // ─── shared UI primitives ─────────────────────────────────────────────────────
@@ -143,8 +141,6 @@ export default async function OwnerDashboard({
     // DB unavailable — all sections will render empty state
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
-
   return (
     <div className="min-h-screen bg-canvas">
       {/* ── branded header bar ─────────────────────────────────────────────── */}
@@ -187,21 +183,25 @@ export default async function OwnerDashboard({
                       <DetailRow label="Deposit" value={money(b.deposit_amount)} />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button
-                        href={`${siteUrl}/api/bookings/${b.id}/approve?token=${b.approval_token}`}
-                        variant="primary"
-                        size="md"
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        href={`${siteUrl}/api/bookings/${b.id}/decline?token=${b.approval_token}`}
-                        variant="ghost"
-                        size="md"
-                        className="border-danger/40 text-danger hover:border-danger/70 hover:bg-danger/5"
-                      >
-                        Decline
-                      </Button>
+                      <form action={ownerApprove}>
+                        <input type="hidden" name="bookingId" value={b.id} />
+                        <input type="hidden" name="secret" value={secret} />
+                        <Button type="submit" variant="primary" size="md">
+                          Approve
+                        </Button>
+                      </form>
+                      <form action={ownerDecline}>
+                        <input type="hidden" name="bookingId" value={b.id} />
+                        <input type="hidden" name="secret" value={secret} />
+                        <Button
+                          type="submit"
+                          variant="ghost"
+                          size="md"
+                          className="border-danger/40 text-danger hover:border-danger/70 hover:bg-danger/5"
+                        >
+                          Decline
+                        </Button>
+                      </form>
                     </div>
                   </Card>
                 ))}

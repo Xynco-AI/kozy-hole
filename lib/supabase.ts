@@ -1,3 +1,4 @@
+import 'server-only'
 import { createClient } from '@supabase/supabase-js'
 
 // Browser/anon client (read-only public data like cabins, approved reviews)

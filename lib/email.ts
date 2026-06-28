@@ -14,7 +14,7 @@ export async function sendOwnerRequestAlert(bookingId: string) {
   const b = await getBooking(bookingId)
   const approve = `${site}/api/bookings/${b.id}/approve?token=${b.approval_token}`
   const decline = `${site}/api/bookings/${b.id}/decline?token=${b.approval_token}`
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM,
     to: process.env.OWNER_EMAIL!,
     subject: `New booking request — ${b.guest_name} (${b.check_in} to ${b.check_out})`,
@@ -29,11 +29,12 @@ export async function sendOwnerRequestAlert(bookingId: string) {
         <a href="${decline}" style="background:#c33;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">Decline</a>
       </p>`,
   })
+  if (error) console.error('sendOwnerRequestAlert failed', { bookingId, error })
 }
 
 export async function sendGuestApproved(bookingId: string, payUrl: string) {
   const b = await getBooking(bookingId)
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM,
     to: b.email,
     subject: 'Your Kozy Hole booking is approved — pay your deposit',
@@ -43,20 +44,23 @@ export async function sendGuestApproved(bookingId: string, payUrl: string) {
       <p><a href="${payUrl}">Pay by card</a> (3% fee) or e-transfer $${b.deposit_amount} to ${process.env.OWNER_EMAIL} (no fee, note your name + dates).</p>
       <p>We hold your dates for 48 hours.</p>`,
   })
+  if (error) console.error('sendGuestApproved failed', { bookingId, error })
 }
 
 export async function sendConfirmation(bookingId: string) {
   const b = await getBooking(bookingId)
-  await resend.emails.send({
+  const guestRes = await resend.emails.send({
     from: FROM, to: b.email,
     subject: 'Your Kozy Hole booking is confirmed',
     html: `<h2>Confirmed!</h2><p>${b.check_in} to ${b.check_out}. Check-in 1 PM, check-out 11 AM.
       Balance, $500/cabin damage deposit${b.has_pet ? ', and the $50 pet fee' : ''} are due on arrival.
       We'll meet you at the lake and point you to your shack.</p>`,
   })
-  await resend.emails.send({
+  if (guestRes.error) console.error('sendConfirmation (guest) failed', { bookingId, error: guestRes.error })
+  const ownerRes = await resend.emails.send({
     from: FROM, to: process.env.OWNER_EMAIL!,
     subject: `CONFIRMED: ${b.guest_name} ${b.check_in} to ${b.check_out}`,
     html: `<p>Deposit paid. ${b.guest_name} · ${b.phone} · ${b.email}</p>`,
   })
+  if (ownerRes.error) console.error('sendConfirmation (owner) failed', { bookingId, error: ownerRes.error })
 }

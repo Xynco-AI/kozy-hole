@@ -25,5 +25,7 @@ export async function POST(req: NextRequest) {
       await sendConfirmation(bookingId)
     }
   }
+  // TODO(phase2): handle 'checkout.session.expired' and payment-failure events
+  // (e.g. async_payment_failed) to release/notify on holds that never get paid.
   return NextResponse.json({ received: true })
 }
