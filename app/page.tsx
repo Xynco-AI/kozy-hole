@@ -9,8 +9,24 @@ import WhatToBring from "@/components/sections/WhatToBring";
 import Reviews from "@/components/sections/Reviews";
 import About from "@/components/sections/About";
 import Contact from "@/components/sections/Contact";
+import { supabaseAnon } from "@/lib/supabase";
 
-export default function Home() {
+export const revalidate = 300;
+
+export default async function Home() {
+  let reviews: { guest_name: string; rating: number; comment: string }[] = [];
+  try {
+    const { data } = await supabaseAnon
+      .from("reviews")
+      .select("guest_name,rating,comment")
+      .eq("approved", true)
+      .order("created_at", { ascending: false })
+      .limit(12);
+    reviews = data ?? [];
+  } catch {
+    reviews = [];
+  }
+
   return (
     <>
       <SiteHeader />
@@ -21,7 +37,7 @@ export default function Home() {
         <Rates />
         <HowItWorks />
         <WhatToBring />
-        <Reviews />
+        <Reviews reviews={reviews} />
         <About />
         <Contact />
       </main>
