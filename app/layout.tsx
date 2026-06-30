@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
+import ScrollProgress from "@/components/ScrollProgress";
+import ScrollReveal from "@/components/ScrollReveal";
 
 // Display serif — characterful, high optical size for headings & accents.
 const fraunces = Fraunces({
@@ -67,7 +69,11 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${hanken.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+          <ScrollProgress />
+          <ScrollReveal />
+          {children}
+        </body>
     </html>
   );
 }

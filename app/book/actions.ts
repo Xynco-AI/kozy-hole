@@ -12,7 +12,7 @@ const schema = z.object({
   guestName: z.string().min(2),
   email: z.string().email(),
   phone: z.string().min(7),
-  partySize: z.number().int().min(1).max(5),
+  partySize: z.number().int().min(1).max(15),
   hasPet: z.boolean(),
   checkIn: z.string(),  // 'YYYY-MM-DD'
   checkOut: z.string(),
@@ -46,12 +46,12 @@ export async function createBookingRequest(input: unknown) {
     const active = (rows ?? [])
       .map((r: any) => r.bookings)
       .filter((b: any) => ['REQUESTED', 'APPROVED', 'CONFIRMED'].includes(b.status))
-      .map((b: any) => ({ checkIn: new Date(b.check_in), checkOut: new Date(b.check_out) }))
+      .map((b: any) => ({ checkIn: parseLocalDate(b.check_in), checkOut: parseLocalDate(b.check_out) }))
 
     const { data: blocks } = await db
       .from('blocked_dates').select('start_date,end_date').eq('cabin_id', cabinId)
     const blocked = (blocks ?? []).map((b: any) =>
-      ({ checkIn: new Date(b.start_date), checkOut: new Date(b.end_date) }))
+      ({ checkIn: parseLocalDate(b.start_date), checkOut: parseLocalDate(b.end_date) }))
 
     if (!isCabinAvailable(requested, [...active, ...blocked])) {
       return { ok: false, error: 'CABIN_UNAVAILABLE', cabinId }

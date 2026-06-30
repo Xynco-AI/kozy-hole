@@ -30,11 +30,7 @@ export default function SectionHeading({
       } max-w-2xl ${className}`}
     >
       {eyebrow && (
-        <span className="mb-4 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
-          <span
-            aria-hidden
-            className="h-px w-7 bg-gradient-to-r from-ice to-transparent"
-          />
+        <span className="mb-4 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
           {eyebrow}
         </span>
       )}

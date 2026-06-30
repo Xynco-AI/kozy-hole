@@ -43,7 +43,8 @@ export type AmenityIcon =
   | "stove"
   | "supplies"
   | "shield"
-  | "washroom";
+  | "washroom"
+  | "fish";
 
 export type Step = { title: string; body: string };
 
@@ -58,7 +59,7 @@ export const business = {
   location: "Lac la Biche Lake, Alberta",
   town: "Lac la Biche",
   season: "December 15 – March 31",
-  logo: "/brand/logo.jpg",
+  logo: "/brand/logo.png",
 } as const;
 
 export const contact = {
@@ -68,7 +69,7 @@ export const contact = {
     { name: "Jason", phone: "780-719-6540" },
   ],
   petPolicy:
-    "Pet-friendly — $50 per stay. Please clean up after your pet and keep them supervised inside the shack.",
+    "Pet-friendly ($50 per stay). Please clean up after your pet and keep them supervised inside the shack.",
 } as const;
 
 export const nav: NavLink[] = [
@@ -76,6 +77,7 @@ export const nav: NavLink[] = [
   { label: "Amenities", href: "#amenities" },
   { label: "Rates", href: "#rates" },
   { label: "How it works", href: "#location" },
+  { label: "FAQ", href: "#faq" },
   { label: "Reviews", href: "#reviews" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
@@ -109,9 +111,9 @@ export const hero = {
 export const cabinsIntro = {
   eyebrow: "The shacks",
   title: "Three cabins, one very comfortable day on the ice",
-  body: "Every shack is the same calibre of warm, clean, and ready-to-fish — the layouts just differ a little. Pick the one that fits your crew.",
+  body: "Every shack is the same calibre of warm, clean, and ready-to-fish. The layouts just differ a little. Pick the one that fits your crew.",
   // Owner hasn't finalized names yet.
-  namesNote: "Cabin names coming soon — the owner is still deciding.",
+  namesNote: "Cabin names coming soon.",
 };
 
 export const cabins: Cabin[] = [
@@ -119,7 +121,7 @@ export const cabins: Cabin[] = [
     slug: "cabin-one",
     name: "Cabin One",
     sleeps: "Sleeps 4 (5 with cot)",
-    photo: "/brand/shack-exterior-1.png",
+    photo: "/brand/cabin-1.png",
     photoAlt:
       "Modern dark ice shack with an open front showing bunk beds and a dining table, under a blue sky.",
     features: [
@@ -133,9 +135,9 @@ export const cabins: Cabin[] = [
     slug: "cabin-two",
     name: "Cabin Two",
     sleeps: "Sleeps 4 (5 with cot)",
-    photo: "/brand/cabin-interior-1.png",
+    photo: "/brand/cabin-2.png",
     photoAlt:
-      "Warm wood-lined ice shack interior with bunk beds on both sides and a wall-mounted TV.",
+      "Ice shack interior with bunk beds, wood-panelled walls and recessed lighting.",
     features: [
       "2 bunk beds with 5″ memory-foam mattresses",
       "Flip-up dining table + 5 chairs",
@@ -149,7 +151,7 @@ export const cabins: Cabin[] = [
     sleeps: "Sleeps 4 (5 with cot)",
     photo: "/brand/cabin-interior-2.png",
     photoAlt:
-      "Wood-lined ice shack interior with a dining table, chairs, wall TV and a tool chest.",
+      "Ice shack interior with light wood ceiling, industrial storage cabinet, dining table and chairs.",
     features: [
       "Single bunks + 2 futons, 5″ memory-foam",
       "Flip-up dining table + 5 chairs",
@@ -191,6 +193,15 @@ export const amenities: AmenityGroup[] = [
     ],
   },
   {
+    title: "Fishing gear included",
+    icon: "fish",
+    items: [
+      "Fishing rods & tackle included",
+      "1 tub of minnows included",
+      "Underwater fish camera",
+    ],
+  },
+  {
     title: "Entertainment & electronics",
     icon: "tv",
     items: [
@@ -225,7 +236,7 @@ export const amenities: AmenityGroup[] = [
 
 // One honest heads-up so guests aren't surprised.
 export const amenitiesFootnote =
-  "Good to know: bring your own bedding and coolers — there is no fridge on board.";
+  "Good to know: bring your own bedding and coolers. There is no fridge on board.";
 
 // ----------------------------------------------------------------------------
 
@@ -251,7 +262,7 @@ export const policies: { label: string; value: string }[] = [
   },
   {
     label: "Paying the deposit",
-    value: "Card adds 3%; e-transfer is free.",
+    value: "Card adds 3%; no additional fee for e-transfer.",
   },
   {
     label: "On arrival",
@@ -291,7 +302,7 @@ export const steps: Step[] = [
   },
   {
     title: "Pay your 50% deposit",
-    body: "Lock it in with a 50% deposit by card (+3%) or e-transfer (no fee).",
+    body: "Lock it in with a 50% deposit by card (+3%) or e-transfer (no additional fee).",
   },
   {
     title: "Meet us at the lake",
@@ -302,12 +313,12 @@ export const steps: Step[] = [
 export const location = {
   eyebrow: "Where we are",
   title: "On the ice at Lac la Biche",
-  body: "We're out on Lac la Biche Lake, near the town of Lac la Biche, Alberta. We meet you at the lake — and your exact shack location is confirmed closer to your stay, based on ice conditions, so you're always set up on safe, good ice.",
+  body: "We're out on Lac la Biche Lake, near the town of Lac la Biche, Alberta. We meet you at the lake, and your exact shack location is confirmed closer to your stay, based on ice conditions, so you're always set up on safe, good ice.",
   seasonLabel: "Season",
   season: "December 15 – March 31",
-  photo: "/brand/shack-exterior-2.png",
+  photo: "/brand/lac-la-biche-drone.jpg",
   photoAlt:
-    "A dark modern ice shack lit up on the lake, open front showing bunks and a dining area under a bright sky.",
+    "Aerial drone shot of Lac la Biche lake shoreline with forest and blue sky.",
 };
 
 // ----------------------------------------------------------------------------
@@ -342,7 +353,7 @@ export const whatToBring: { title: string; detail: string }[] = [
 export const reviewsIntro = {
   eyebrow: "Reviews",
   title: "Be the first to fish with us",
-  body: "We're brand new on the ice, so there are no reviews yet — reviews coming soon. Stay with us this season and tell the next crew what you thought.",
+  body: "We're brand new on the ice, so there are no reviews yet. Stay with us this season and tell the next crew what you thought.",
   formTitle: "Leave a review",
   formNote: "Stayed with us? We'd love to hear how it went.",
 };
@@ -355,7 +366,7 @@ export const about = {
   // Lightly polished from the owner's copy — meaning and voice kept intact.
   paragraphs: [
     "We're two lifelong friends who turned our passion for the outdoors, great fishing, and winter adventures into a business. After years of spending our winters on the ice making unforgettable memories with family and friends, we created an ice shack rental service so others can enjoy the same experience in comfort.",
-    "Our mission is simple: clean, well-maintained, reliable ice shacks backed by friendly, dependable service. Some of the best memories are made on the frozen lake — whether you're chasing your next big catch, introducing someone to ice fishing for the first time, or just enjoying time with the people who matter most.",
+    "Our mission is simple: clean, well-maintained, reliable ice shacks backed by friendly, dependable service. Some of the best memories are made on the frozen lake, whether you're chasing your next big catch, introducing someone to ice fishing for the first time, or just enjoying time with the people who matter most.",
     "As a locally owned and operated business, we help you spend less time worrying about the details and more time enjoying your day on the ice.",
   ],
 } as const;
@@ -365,8 +376,69 @@ export const about = {
 export const contactIntro = {
   eyebrow: "Get in touch",
   title: "Questions? Reach out anytime",
-  body: "Call or text either of us, or send an email — we're happy to help you plan your trip.",
+  body: "Call or text either of us, or send an email. We're happy to help you plan your trip.",
 };
+
+// ----------------------------------------------------------------------------
+
+export const faqIntro = {
+  eyebrow: "FAQ",
+  title: "Questions we get asked a lot",
+  body: "Everything you need to know before you book.",
+};
+
+export const faqs: { q: string; a: string }[] = [
+  {
+    q: "How does the booking process work?",
+    a: "Send a booking request with your cabin, dates, and group details — no payment yet. We confirm availability and approve your request, then you lock it in with a 50% deposit. On the day of your stay, we meet you at Lac la Biche and get you settled into your shack.",
+  },
+  {
+    q: "How do I pay my deposit?",
+    a: "By credit or debit card (a 3% processing fee applies) or by Interac e-transfer to kozyhole@gmail.com with no additional fee. Note your name and booking dates in the e-transfer message.",
+  },
+  {
+    q: "What is due when I arrive?",
+    a: "The remaining 50% balance, a $500 damage deposit per cabin, and the $50 pet fee if you are bringing a dog. The damage deposit is returned after checkout if the shack is left in good condition.",
+  },
+  {
+    q: "What is your cancellation policy?",
+    a: "Cancel with at least one week's notice and we will apply your deposit as a credit toward a future stay. Cancellations with less than one week's notice and no-shows are non-refundable.",
+  },
+  {
+    q: "What is included in the rental?",
+    a: "Everything you need to fish and stay comfortable: a heated and insulated shack, 6 to 8 pre-drilled holes with safety covers, fishing rods and tackle, 1 tub of minnows, an underwater fish camera, all propane for heat and cooking, full solar power, Smart TV with satellite internet and forward-facing sonar feed, Coleman stove and BBQ, pots, pans, utensils, coffee pot, paper towel, soap, garbage bags, and access to the shared heated washroom.",
+  },
+  {
+    q: "What do I need to bring?",
+    a: "Food, water, and beverages (no fridge on board, so bring a cooler), bedding for the bunks (sheets, pillows, blankets or sleeping bags), a valid Alberta fishing licence for every angler, and indoor shoes or slippers.",
+  },
+  {
+    q: "Can I bring my dog?",
+    a: "Yes. Kozy Hole is pet-friendly. There is a $50 per-stay pet fee due on arrival. Please clean up after your pet and keep them supervised inside the shack.",
+  },
+  {
+    q: "Is there a washroom?",
+    a: "Yes. There is a shared heated 4x6 washroom available to guests in all three units.",
+  },
+  {
+    q: "Do I need a fishing licence?",
+    a: "Yes. Every person who fishes needs a valid Alberta fishing licence. You can purchase one online at mywildalberta.ca before your trip.",
+  },
+  {
+    q: "Where exactly are the shacks on the lake?",
+    a: "We are out on Lac la Biche Lake, near the town of Lac la Biche. Your exact shack location is confirmed closer to your stay based on current ice conditions. We always set up on safe, productive ice.",
+  },
+  {
+    q: "What if ice conditions are unsafe?",
+    a: "Guest safety is our top priority. We monitor ice conditions throughout the season and will contact you directly if conditions require us to reschedule or relocate your stay.",
+  },
+  {
+    q: "When is the season?",
+    a: "December 15 through March 31, weather and ice permitting. We will always confirm your shack location based on ice conditions before your arrival.",
+  },
+];
+
+// ----------------------------------------------------------------------------
 
 export const footer = {
   seasonNote: `Open season ${business.season}. We fish Lac la Biche, Alberta.`,

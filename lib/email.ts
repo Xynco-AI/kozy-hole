@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
+import { formatDate } from './dates'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 const FROM = 'Kozy Hole <bookings@kozyhole.ca>'
@@ -41,7 +42,7 @@ export async function sendGuestApproved(bookingId: string, payUrl: string) {
     html: `
       <h2>You're approved!</h2>
       <p>${b.check_in} to ${b.check_out}. To lock it in, pay your 50% deposit ($${b.deposit_amount}).</p>
-      <p><a href="${payUrl}">Pay by card</a> (3% fee) or e-transfer $${b.deposit_amount} to ${process.env.OWNER_EMAIL} (no fee, note your name + dates).</p>
+      <p><a href="${payUrl}">Pay by card</a> (3% fee) or e-transfer $${b.deposit_amount} to ${process.env.OWNER_EMAIL} (no additional fee, note your name + dates).</p>
       <p>We hold your dates for 48 hours.</p>`,
   })
   if (error) console.error('sendGuestApproved failed', { bookingId, error })
@@ -63,4 +64,23 @@ export async function sendConfirmation(bookingId: string) {
     html: `<p>Deposit paid. ${b.guest_name} · ${b.phone} · ${b.email}</p>`,
   })
   if (ownerRes.error) console.error('sendConfirmation (owner) failed', { bookingId, error: ownerRes.error })
+}
+
+export async function sendCancellation(bookingId: string) {
+  const b = await getBooking(bookingId)
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: b.email,
+    subject: 'Your Kozy Hole booking has been cancelled',
+    html: `
+      <h2>Your booking has been cancelled</h2>
+      <p>Hi ${b.guest_name},</p>
+      <p>We're sorry to let you know that your booking for
+        <strong>${formatDate(b.check_in)} → ${formatDate(b.check_out)}</strong>
+        has been cancelled and those dates have been released.</p>
+      <p>If you cancelled with at least a week's notice, you may be eligible for a credit toward
+        a future stay — we'll be in touch.</p>
+      <p>We hope to host you another time at Kozy Hole!</p>`,
+  })
+  if (error) console.error('sendCancellation failed', { bookingId, error })
 }

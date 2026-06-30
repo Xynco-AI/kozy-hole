@@ -67,6 +67,14 @@ const paths: Record<AmenityIcon, React.ReactNode> = {
   washroom: (
     <path d="M12 3.5s5.5 6.1 5.5 9.8A5.5 5.5 0 0 1 12 19a5.5 5.5 0 0 1-5.5-5.7C6.5 9.6 12 3.5 12 3.5Z" />
   ),
+  // fish
+  fish: (
+    <>
+      <path d="M6.5 12c0-3.3 2.5-6.5 8-7.5-.7 2-1 4-1 7.5s.3 5.5 1 7.5c-5.5-1-8-4.2-8-7.5Z" />
+      <path d="M14.5 12H21M18 9l3 3-3 3" />
+      <circle cx="9" cy="10.5" r="0.8" fill="currentColor" stroke="none" />
+    </>
+  ),
 };
 
 export default function Icon({ name, className = "" }: IconProps) {

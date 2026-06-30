@@ -6,6 +6,7 @@ import Amenities from "@/components/sections/Amenities";
 import Rates from "@/components/sections/Rates";
 import HowItWorks from "@/components/sections/HowItWorks";
 import WhatToBring from "@/components/sections/WhatToBring";
+import FAQ from "@/components/sections/FAQ";
 import Reviews from "@/components/sections/Reviews";
 import About from "@/components/sections/About";
 import Contact from "@/components/sections/Contact";
@@ -37,6 +38,7 @@ export default async function Home() {
         <Rates />
         <HowItWorks />
         <WhatToBring />
+        <FAQ />
         <Reviews reviews={reviews} />
         <About />
         <Contact />

@@ -66,7 +66,7 @@ export default function QuotePanel({ quote: q }: Props) {
       <p className="mt-4 text-[0.8rem] leading-relaxed text-muted">
         Card adds 3%{" "}
         <span className="tabular-nums text-faint">({fmt(q.cardCharge)})</span>
-        {" · "}e-transfer no fee{" "}
+        {" · "}e-transfer no additional fee{" "}
         <span className="tabular-nums text-faint">({fmt(q.etransferCharge)})</span>
         .{" "}
         Balance, $500/cabin damage deposit, and $50/stay pet fee due on arrival.

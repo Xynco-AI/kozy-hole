@@ -51,7 +51,7 @@ export default async function BookPage() {
             <SectionHeading
               eyebrow="Book a stay"
               title="Reserve your spot on the ice"
-              body="Choose your cabin, pick your dates, and send us a request. No payment yet — we confirm availability first, then collect your 50% deposit."
+              body="Choose your cabin, pick your dates, and send us a request. No payment yet. We confirm availability first, then collect your 50% deposit."
             />
           </Container>
         </div>

@@ -32,14 +32,14 @@ export default function Hero() {
       <Container className="relative flex flex-col items-center pb-24 pt-16 text-center sm:pt-20">
         {/* Logo badge */}
         <div className="kh-reveal" style={{ animationDelay: "0ms" }}>
-          <div className="relative mx-auto h-32 w-32 overflow-hidden rounded-3xl bg-white/[0.03] p-1 ring-1 ring-hairline backdrop-blur-sm sm:h-40 sm:w-40">
+          <div className="relative mx-auto h-44 w-44 sm:h-56 sm:w-56">
             <Image
-              src="/brand/logo.jpg"
+              src="/brand/logo.png"
               alt="Kozy Hole Ice Shack Rentals"
               fill
               priority
-              sizes="(min-width: 640px) 160px, 128px"
-              className="rounded-[1.25rem] object-contain"
+              sizes="(min-width: 640px) 224px, 176px"
+              className="object-contain drop-shadow-2xl"
             />
           </div>
         </div>

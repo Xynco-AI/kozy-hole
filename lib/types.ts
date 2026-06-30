@@ -1,5 +1,5 @@
 export type BookingStatus =
-  'REQUESTED' | 'APPROVED' | 'CONFIRMED' | 'DECLINED' | 'EXPIRED' | 'COMPLETED'
+  'REQUESTED' | 'APPROVED' | 'CONFIRMED' | 'DECLINED' | 'EXPIRED' | 'COMPLETED' | 'CANCELLED'
 
 export type Cabin = {
   id: string

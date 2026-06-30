@@ -13,6 +13,7 @@ import {
   approveReview,
   blockDates,
 } from './actions'
+import CancelForm from './CancelForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,8 +35,7 @@ function fmtDate(d: string): string {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-5 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
-      <span aria-hidden className="h-px w-7 bg-gradient-to-r from-ice to-transparent" />
+    <h2 className="mb-5 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
       {children}
     </h2>
   )
@@ -226,13 +226,16 @@ export default async function OwnerDashboard({
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Deposit owed" value={money(b.deposit_amount)} />
                     </div>
-                    <form action={confirmEtransfer}>
-                      <input type="hidden" name="bookingId" value={b.id} />
-                      <input type="hidden" name="secret" value={secret} />
-                      <Button type="submit" variant="secondary" size="md">
-                        Mark e-transfer received
-                      </Button>
-                    </form>
+                    <div className="flex flex-wrap gap-2">
+                      <form action={confirmEtransfer}>
+                        <input type="hidden" name="bookingId" value={b.id} />
+                        <input type="hidden" name="secret" value={secret} />
+                        <Button type="submit" variant="secondary" size="md">
+                          Mark e-transfer received
+                        </Button>
+                      </form>
+                      <CancelForm bookingId={b.id} secret={secret} />
+                    </div>
                   </Card>
                 ))}
               </div>

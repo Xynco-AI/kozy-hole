@@ -63,11 +63,7 @@ export default function HowItWorks() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-canvas/30 lg:to-canvas/60" />
           </div>
           <div className="flex flex-col justify-center gap-5 p-8 sm:p-10">
-            <span className="inline-flex w-fit items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
-              <span
-                aria-hidden
-                className="h-px w-7 bg-gradient-to-r from-ice to-transparent"
-              />
+            <span className="inline-flex w-fit items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
               {location.eyebrow}
             </span>
             <h3 className="font-display text-3xl tracking-tight text-ink">

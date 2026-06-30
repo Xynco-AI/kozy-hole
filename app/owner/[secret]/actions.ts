@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
-import { sendConfirmation } from '@/lib/email'
+import { sendConfirmation, sendCancellation } from '@/lib/email'
 import { approveBooking, declineBooking } from '@/lib/booking-approval'
 
 function secretOk(secret: string | null): boolean {
@@ -83,6 +83,32 @@ export async function markCompleted(formData: FormData): Promise<void> {
       .eq('status', 'CONFIRMED')
   } catch {
     // swallow
+  }
+
+  revalidatePath('/owner/' + secret)
+}
+
+// ─── cancelBooking ────────────────────────────────────────────────────────────
+export async function cancelBooking(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  const bookingId = formData.get('bookingId') as string | null
+  if (!secretOk(secret) || !bookingId) return
+
+  try {
+    const db = supabaseAdmin()
+    await db
+      .from('bookings')
+      .update({ status: 'CANCELLED' })
+      .eq('id', bookingId)
+      .in('status', ['APPROVED', 'CONFIRMED'])
+
+    try {
+      await sendCancellation(bookingId)
+    } catch {
+      // mail failure should not break the action
+    }
+  } catch {
+    // DB failure — swallow, UI will be stale until next refresh
   }
 
   revalidatePath('/owner/' + secret)

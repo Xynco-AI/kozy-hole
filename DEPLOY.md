@@ -9,8 +9,9 @@ The site is built and committed. These are the go-live steps, in order. Everythi
 - Create a Supabase project.
 - In the SQL editor, run, in order:
   1. `supabase/migrations/0001_init.sql`
-  2. `supabase/migrations/0002_security.sql`  ← enables Row Level Security (do NOT skip)
-  3. `supabase/seed.sql`  ← seeds the 3 cabins (rename them once Rob picks names)
+  2. `supabase/migrations/0002_security.sql`  ← enables Row Level Security + adds card_charge column (do NOT skip)
+  3. `supabase/migrations/0003_cancelled_status.sql`  ← adds CANCELLED booking status (must run outside a transaction)
+  4. `supabase/seed.sql`  ← seeds the 3 cabins (rename them once Rob picks names)
 - From Project Settings → API, copy: **Project URL**, **anon public key**, **service_role key**.
 
 ## 3. Stripe (deposit payments)

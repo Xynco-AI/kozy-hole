@@ -17,6 +17,9 @@ export async function GET(
   if (b.status !== 'REQUESTED') {
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/booking/${b.id}`)
   }
-  await approveBooking(id)
+  const result = await approveBooking(id)
+  if (!result.ok) {
+    return new NextResponse('Approval failed — please try again or contact support.', { status: 500 })
+  }
   return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/booking/${b.id}?owner=approved`)
 }

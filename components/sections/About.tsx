@@ -9,11 +9,7 @@ export default function About() {
         <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.85fr] lg:gap-16">
           {/* Copy */}
           <div>
-            <span className="inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
-              <span
-                aria-hidden
-                className="h-px w-7 bg-gradient-to-r from-ice to-transparent"
-              />
+            <span className="inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
               {about.eyebrow}
             </span>
             <h2 className="mt-4 max-w-xl font-display text-balance text-[2rem] leading-[1.08] tracking-tight text-ink sm:text-[2.6rem]">
@@ -27,15 +23,15 @@ export default function About() {
               ))}
             </div>
             <p className="mt-7 font-display text-lg italic text-ice">
-              — Rob &amp; Jason, {business.town}
+              Rob &amp; Jason, {business.town}
             </p>
           </div>
 
           {/* Photo */}
           <div className="relative aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] border border-hairline">
             <Image
-              src="/brand/cabin-interior-2.png"
-              alt="Inside a Kozy Hole shack — warm wood walls, a dining table and chairs, and a wall-mounted TV."
+              src="/brand/cabin-3.png"
+              alt="Inside a Kozy Hole shack — four bunks with memory-foam mattresses, LED ceiling lighting, and a wall-mounted TV."
               fill
               sizes="(min-width: 1024px) 40vw, 100vw"
               className="object-cover"

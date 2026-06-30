@@ -16,11 +16,11 @@ export default function Amenities() {
           body={amenitiesIntro.body}
         />
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3">
           {amenities.map((group) => (
             <div
               key={group.title}
-              className="group flex flex-col gap-4 bg-canvas p-7 transition-colors duration-300 hover:bg-surface"
+              className="group flex flex-col gap-4 p-7"
             >
               <div className="flex items-center gap-3.5">
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-ice/20 bg-ice-soft text-ice transition-colors duration-300 group-hover:border-ice/40">

@@ -117,6 +117,10 @@ export default function BookingForm({ cabins, previewMode }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Max party size scales with the number of selected cabins (5 per cabin).
+  const maxPartySize = Math.max(5, selectedCabinIds.length * 5);
+  const effectivePartySize = Math.min(partySize, maxPartySize);
+
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
@@ -163,6 +167,7 @@ export default function BookingForm({ cabins, previewMode }: Props) {
 
   const canSubmit =
     !submitting &&
+    !previewMode &&
     selectedCabinIds.length >= 1 &&
     validDates &&
     guestName.trim().length >= 2 &&
@@ -190,7 +195,7 @@ export default function BookingForm({ cabins, previewMode }: Props) {
         guestName: guestName.trim(),
         email: email.trim(),
         phone: phone.trim(),
-        partySize,
+        partySize: effectivePartySize,
         hasPet,
         checkIn,
         checkOut,
@@ -220,8 +225,10 @@ export default function BookingForm({ cabins, previewMode }: Props) {
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-10">
       {/* Preview mode banner */}
       {previewMode && (
-        <div className="rounded-xl border border-ice/20 bg-ice-soft px-4 py-3 text-sm text-ice">
-          Preview mode — online booking goes live once we&apos;re set up.
+        <div className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-4 text-sm text-amber">
+          <span className="font-semibold">Booking is coming soon.</span> The site is still being set up.
+          Once live, you&apos;ll be able to book directly here. In the meantime,{" "}
+          <a href="#contact" className="underline underline-offset-2">contact us</a> to reserve your dates.
         </div>
       )}
 
@@ -373,11 +380,11 @@ export default function BookingForm({ cabins, previewMode }: Props) {
             </label>
             <select
               id="party-size"
-              value={partySize}
+              value={effectivePartySize}
               onChange={(e) => setPartySize(Number(e.target.value))}
               className="h-11 rounded-xl border border-hairline bg-surface-2 px-4 text-sm text-ink focus:border-ice/60 focus:outline-none focus:ring-1 focus:ring-ice/30"
             >
-              {[1, 2, 3, 4, 5].map((n) => (
+              {Array.from({ length: maxPartySize }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
                   {n} {n === 1 ? "person" : "people"}
                 </option>
@@ -441,11 +448,11 @@ export default function BookingForm({ cabins, previewMode }: Props) {
         <div className="flex flex-col gap-2 rounded-xl border border-hairline bg-surface p-4 text-sm text-muted">
           <p className="flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-ice/60" />
-            <strong className="text-ink">Credit card</strong> — adds a 3% processing fee
+            <strong className="text-ink">Credit card</strong>: adds a 3% processing fee
           </p>
           <p className="flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-success/60" />
-            <strong className="text-ink">Interac e-transfer</strong> — no fee
+            <strong className="text-ink">Interac e-transfer</strong>: no additional fee
           </p>
           <p className="mt-1 text-xs text-faint">
             You&apos;ll choose your method after we confirm your dates.
@@ -459,7 +466,7 @@ export default function BookingForm({ cabins, previewMode }: Props) {
           Release of liability
         </h2>
         <WaiverBox
-          partySize={partySize}
+          partySize={effectivePartySize}
           partyMembers={partyMembers}
           onPartyMembersChange={setPartyMembers}
           agreed={waiverAgreed}
@@ -486,7 +493,7 @@ export default function BookingForm({ cabins, previewMode }: Props) {
           {submitting ? "Sending request…" : "Send booking request"}
         </Button>
         <p className="text-xs text-faint">
-          No payment yet — we confirm availability first, then collect your 50% deposit.
+          No payment yet. We confirm availability first, then collect your 50% deposit.
         </p>
       </div>
     </form>

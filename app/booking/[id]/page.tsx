@@ -123,11 +123,7 @@ export default async function BookingPage({
         <main className="min-h-screen py-20">
           <Container size="narrow">
             <div className="kh-reveal rounded-[var(--radius-card)] border border-hairline bg-surface p-8 sm:p-12">
-              <span className="mb-5 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
-                <span
-                  aria-hidden
-                  className="h-px w-7 bg-gradient-to-r from-ice to-transparent"
-                />
+              <span className="mb-5 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
                 Request received
               </span>
               <h1 className="font-display text-[2rem] leading-[1.08] tracking-tight text-ink sm:text-[2.6rem]">
@@ -183,11 +179,7 @@ export default async function BookingPage({
           <Container size="narrow">
             <div className="kh-reveal rounded-[var(--radius-card)] border border-hairline bg-surface p-8 sm:p-12">
               {/* Heading */}
-              <span className="mb-5 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-amber">
-                <span
-                  aria-hidden
-                  className="h-px w-7 bg-gradient-to-r from-amber to-transparent"
-                />
+              <span className="mb-5 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-amber">
                 Approved
               </span>
               <h1 className="font-display text-[2rem] leading-[1.08] tracking-tight text-ink sm:text-[2.6rem]">
@@ -260,7 +252,7 @@ export default async function BookingPage({
                     >
                       kozyhole@gmail.com
                     </a>{" "}
-                    (no fee). Include your name and dates in the note. We&apos;ll
+                    (no additional fee). Include your name and dates in the note. We&apos;ll
                     confirm once it lands.
                   </p>
                 </div>
@@ -299,11 +291,7 @@ export default async function BookingPage({
 
             <div className="kh-reveal rounded-[var(--radius-card)] border border-success/25 bg-surface p-8 sm:p-12">
               {/* Heading */}
-              <span className="mb-5 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-success">
-                <span
-                  aria-hidden
-                  className="h-px w-7 bg-gradient-to-r from-success to-transparent"
-                />
+              <span className="mb-5 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-success">
                 Confirmed
               </span>
               <h1 className="font-display text-[2rem] leading-[1.08] tracking-tight text-ink sm:text-[2.6rem]">
@@ -381,6 +369,38 @@ export default async function BookingPage({
     );
   }
 
+  // ── CANCELLED ─────────────────────────────────────────────────────────────
+  if (status === "CANCELLED") {
+    return (
+      <>
+        <SiteHeader />
+        <main className="min-h-screen py-20">
+          <Container size="narrow">
+            <div className="rounded-[var(--radius-card)] border border-hairline bg-surface p-8 text-center sm:p-12">
+              <span className="mb-5 inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-muted">
+                Booking cancelled
+              </span>
+              <h1 className="font-display text-[2rem] leading-[1.08] tracking-tight text-ink sm:text-[2.6rem]">
+                This booking has been cancelled
+              </h1>
+              <p className="mx-auto mt-5 max-w-sm text-[1.05rem] leading-relaxed text-muted">
+                If you cancelled with at least a week&apos;s notice, you may be
+                eligible for a credit toward a future stay — we&apos;ll be in touch.
+                We hope to see you on the ice another time.
+              </p>
+              <div className="mt-8">
+                <Button href="/book" variant="primary" size="lg">
+                  Book again
+                </Button>
+              </div>
+            </div>
+          </Container>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
+
   // ── EXPIRED ───────────────────────────────────────────────────────────────
   if (status === "EXPIRED") {
     return (
@@ -419,7 +439,7 @@ export default async function BookingPage({
       <main className="min-h-screen py-20">
         <Container size="narrow">
           <div className="rounded-[var(--radius-card)] border border-hairline bg-surface p-8 sm:p-12">
-            <span className="mb-5 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
+            <span className="mb-5 inline-flex items-center text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-ice">
               <span
                 aria-hidden
                 className="h-px w-7 bg-gradient-to-r from-ice to-transparent"
