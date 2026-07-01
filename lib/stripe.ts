@@ -1,8 +1,15 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-06-24.dahlia',
-})
+let _stripe: Stripe | null = null
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2026-06-24.dahlia',
+    })
+  }
+  return _stripe
+}
 
 export async function createDepositCheckout(params: {
   bookingId: string
@@ -10,7 +17,7 @@ export async function createDepositCheckout(params: {
   guestEmail: string
   description: string
 }) {
-  return stripe.checkout.sessions.create({
+  return getStripe().checkout.sessions.create({
     mode: 'payment',
     customer_email: params.guestEmail,
     line_items: [{

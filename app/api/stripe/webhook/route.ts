@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmation } from '@/lib/email'
 
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const body = await req.text()
   let event
   try {
-    event = await stripe.webhooks.constructEventAsync(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = await getStripe().webhooks.constructEventAsync(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch {
     return new NextResponse('bad signature', { status: 400 })
   }
