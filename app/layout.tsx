@@ -48,14 +48,14 @@ export const metadata: Metadata = {
     siteName: "Kozy Hole Ice Shack Rentals",
     locale: "en_CA",
     type: "website",
-    images: [{ url: "/brand/logo.jpg", width: 590, height: 512, alt: "Kozy Hole Ice Shack Rentals" }],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Kozy Hole Ice Shack Rentals" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Kozy Hole Ice Shack Rentals",
     description:
       "Heated, fully-loaded ice fishing shacks on Lac la Biche, Alberta. Sleeps up to 5.",
-    images: ["/brand/logo.jpg"],
+    images: ["/opengraph-image"],
   },
 };
 
