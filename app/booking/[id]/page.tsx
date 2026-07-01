@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import Container from "@/components/Container";
 import Button from "@/components/Button";
 import { supabaseAdmin } from "@/lib/supabase";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { formatDate, parseLocalDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -156,7 +156,7 @@ export default async function BookingPage({
     let stripeTotal: number | null = null;
     if (b.stripe_session_id) {
       try {
-        const session = await stripe.checkout.sessions.retrieve(
+        const session = await getStripe().checkout.sessions.retrieve(
           b.stripe_session_id
         );
         stripeUrl = session.url ?? null;
