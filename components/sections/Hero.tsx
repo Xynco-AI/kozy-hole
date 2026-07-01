@@ -37,6 +37,7 @@ export default function Hero() {
               alt="Kozy Hole Ice Shack Rentals"
               fill
               priority
+              loading="eager"
               sizes="(min-width: 640px) 224px, 176px"
               className="object-contain drop-shadow-2xl"
             />
