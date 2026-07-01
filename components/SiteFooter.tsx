@@ -1,7 +1,17 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
 import Container from "./Container";
 import { business, contact, footer, nav } from "@/lib/content";
+
+function scrollToSection(href: string) {
+  const id = href.startsWith("#") ? href.slice(1) : null;
+  if (!id) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const y = el.getBoundingClientRect().top + window.scrollY - 72;
+  window.scrollTo({ top: y, behavior: "smooth" });
+}
 
 export default function SiteFooter() {
   return (
@@ -47,12 +57,16 @@ export default function SiteFooter() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {nav.map((item) => (
                 <li key={item.href}>
-                  <Link
+                  <a
                     href={item.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      scrollToSection(item.href);
+                    }}
                     className="text-sm text-muted transition-colors hover:text-ice"
                   >
                     {item.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>

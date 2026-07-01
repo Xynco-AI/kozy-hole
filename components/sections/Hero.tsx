@@ -5,7 +5,7 @@ import { hero } from "@/lib/content";
 
 export default function Hero() {
   return (
-    <section className="relative -mt-[4.5rem] overflow-hidden">
+    <section className="relative overflow-hidden">
       {/* — Atmosphere — */}
       {/* Breathing ice-blue radial glow behind the headline */}
       <div
@@ -23,12 +23,12 @@ export default function Hero() {
           alt=""
           fill
           priority
-          className="object-cover object-top opacity-60"
+          className="object-cover object-center opacity-75"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-canvas/30 via-canvas/60 to-canvas" />
+        <div className="absolute inset-0 bg-gradient-to-b from-canvas/20 via-canvas/50 to-canvas" />
       </div>
 
-      <Container className="relative flex flex-col items-center pb-24 pt-[8.5rem] text-center sm:pt-[9.5rem]">
+      <Container className="relative flex flex-col items-center pb-24 pt-16 text-center sm:pt-20">
         {/* Logo badge */}
         <div className="kh-reveal" style={{ animationDelay: "0ms" }}>
           <div className="relative mx-auto h-32 w-32 sm:h-44 sm:w-44 lg:h-56 lg:w-56">
