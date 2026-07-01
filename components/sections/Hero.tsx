@@ -19,7 +19,7 @@ export default function Hero() {
       {/* Hero background image */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <Image
-          src="/brand/shack-exterior-1.png"
+          src="/brand/hero-sky.png"
           alt=""
           fill
           priority
