@@ -89,7 +89,7 @@ export default function SiteHeader() {
                 key={item.href}
                 href={href}
                 onClick={(e) => handleNavClick(e, item.href)}
-                className="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+                className="rounded-full px-3.5 py-2 text-sm font-medium text-[#ffffff] transition-colors hover:text-ice"
               >
                 {item.label}
               </Link>
