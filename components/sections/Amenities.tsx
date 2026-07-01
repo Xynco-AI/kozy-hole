@@ -20,7 +20,7 @@ export default function Amenities() {
           {amenities.map((group) => (
             <div
               key={group.title}
-              className="group flex flex-col gap-4 p-4 sm:p-7"
+              className="group flex flex-col gap-4 p-3 sm:p-4 lg:p-7"
             >
               <div className="flex items-center gap-3.5">
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-ice/20 bg-ice-soft text-ice transition-colors duration-300 group-hover:border-ice/40">

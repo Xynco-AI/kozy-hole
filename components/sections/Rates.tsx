@@ -32,7 +32,7 @@ export default function Rates() {
                   </span>
                   <div className="flex items-baseline gap-1.5">
                     <span
-                      className={`font-display text-5xl tracking-tight ${
+                      className={`font-display text-3xl sm:text-5xl tracking-tight ${
                         featured ? "text-amber" : "text-ink"
                       }`}
                     >

@@ -23,7 +23,7 @@ export default function FAQ() {
               <button
                 type="button"
                 onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-center justify-between gap-6 py-5 text-left"
+                className="flex w-full items-center justify-between gap-3 py-5 text-left sm:gap-6"
                 aria-expanded={open === i}
               >
                 <span className="font-display text-lg tracking-tight text-ink">

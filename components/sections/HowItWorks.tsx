@@ -52,7 +52,7 @@ export default function HowItWorks() {
 
         {/* Location panel */}
         <div className="mt-12 grid overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-canvas lg:grid-cols-2">
-          <div className="relative min-h-[280px] lg:min-h-full">
+          <div className="relative min-h-[200px] sm:min-h-[280px] lg:min-h-full">
             <Image
               src={location.photo}
               alt={location.photoAlt}
