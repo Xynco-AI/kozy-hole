@@ -6,9 +6,6 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  const font = await fetch(
-    "https://fonts.gstatic.com/s/fraunces/v32/6NUu8FyLNQOQZAnv9ZwNjucMHVn85Ni7emAe9lKqZTnDn-ahFU3r.woff2"
-  ).then((r) => r.arrayBuffer());
 
   return new ImageResponse(
     (
@@ -91,7 +88,7 @@ export default async function Image() {
             letterSpacing: "-0.02em",
             lineHeight: 1,
             textAlign: "center",
-            fontFamily: "Fraunces, Georgia, serif",
+            fontFamily: "Georgia, serif",
           }}
         >
           Kozy Hole
@@ -128,7 +125,7 @@ export default async function Image() {
             fontSize: "32px",
             color: "#9db0c0",
             textAlign: "center",
-            fontFamily: "Fraunces, Georgia, serif",
+            fontFamily: "Georgia, serif",
             fontStyle: "italic",
             maxWidth: "700px",
             lineHeight: 1.3,
@@ -151,16 +148,6 @@ export default async function Image() {
         />
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        {
-          name: "Fraunces",
-          data: font,
-          weight: 700,
-          style: "normal",
-        },
-      ],
-    }
+    { ...size }
   );
 }
