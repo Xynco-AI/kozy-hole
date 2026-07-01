@@ -184,7 +184,7 @@ export const amenities: AmenityGroup[] = [
     items: ["Full solar setup with inverter", "Inverter generator on board"],
   },
   {
-    title: "Holes, ready to fish",
+    title: "Pre-drilled holes, ready to fish",
     icon: "auger",
     items: [
       "6–8 pre-drilled holes (included)",
