@@ -78,7 +78,6 @@ export const nav: NavLink[] = [
   { label: "Rates", href: "#rates" },
   { label: "How it works", href: "#location" },
   { label: "FAQ", href: "#faq" },
-  { label: "Reviews", href: "#reviews" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ];
