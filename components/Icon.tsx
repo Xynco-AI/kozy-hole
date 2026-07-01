@@ -21,13 +21,13 @@ const paths: Record<AmenityIcon, React.ReactNode> = {
       <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" />
     </>
   ),
-  // auger / drilled hole
+  // top-down view of a drilled hole in ice with fishing line
   auger: (
     <>
-      <ellipse cx="12" cy="6" rx="6" ry="2.4" />
-      <path d="M6 6c0 1.3 2.7 2.4 6 2.4S18 7.3 18 6" />
-      <path d="M12 8.4V19" />
-      <path d="M9 19h6" />
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M12 2v7.5" />
+      <path d="M12 14.5v2.5" />
     </>
   ),
   // monitor — TV / electronics
