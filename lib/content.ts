@@ -314,7 +314,7 @@ export const location = {
   body: "We're out on Lac la Biche Lake, near the town of Lac la Biche, Alberta. We meet you at the lake, and your exact shack location is confirmed closer to your stay, based on ice conditions, so you're always set up on safe, good ice.",
   seasonLabel: "Season",
   season: "December 15 – March 31",
-  photo: "/brand/lac-la-biche-drone.jpg",
+  photo: "/brand/frozen-lake.png",
   photoAlt:
     "Aerial drone shot of Lac la Biche lake shoreline with forest and blue sky.",
 };
