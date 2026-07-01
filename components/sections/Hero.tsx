@@ -16,23 +16,22 @@ export default function Hero() {
             "radial-gradient(closest-side, rgba(92,198,236,0.28), rgba(46,159,208,0.08) 55%, transparent 72%)",
         }}
       />
-      {/* Faint exterior photo washed into the lower edge for depth */}
+      {/* Hero background image */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <Image
           src="/brand/shack-exterior-1.png"
           alt=""
           fill
           priority
-          sizes="100vw"
-          className="object-cover object-[center_30%] opacity-[0.10]"
+          className="object-cover object-top opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-canvas/60 via-canvas/85 to-canvas" />
+        <div className="absolute inset-0 bg-gradient-to-b from-canvas/30 via-canvas/60 to-canvas" />
       </div>
 
       <Container className="relative flex flex-col items-center pb-24 pt-16 text-center sm:pt-20">
         {/* Logo badge */}
         <div className="kh-reveal" style={{ animationDelay: "0ms" }}>
-          <div className="relative mx-auto h-44 w-44 sm:h-56 sm:w-56">
+          <div className="relative mx-auto h-32 w-32 sm:h-44 sm:w-44 lg:h-56 lg:w-56">
             <Image
               src="/brand/logo.png"
               alt="Kozy Hole Ice Shack Rentals"
@@ -55,7 +54,7 @@ export default function Hero() {
 
         {/* Headline */}
         <h1
-          className="kh-reveal mt-7 max-w-4xl font-display text-balance text-[2.85rem] font-medium leading-[1.02] tracking-[-0.02em] text-ink sm:text-[4.25rem] lg:text-[5rem]"
+          className="kh-reveal mt-7 max-w-4xl font-display text-balance text-[2rem] font-medium leading-[1.02] tracking-[-0.02em] text-ink sm:text-[2.85rem] md:text-[4.25rem] lg:text-[5rem]"
           style={{ animationDelay: "200ms" }}
         >
           {hero.headline.pre}{" "}
@@ -64,7 +63,7 @@ export default function Hero() {
 
         {/* Subhead */}
         <p
-          className="kh-reveal mt-7 max-w-2xl text-pretty text-lg leading-relaxed text-muted sm:text-xl"
+          className="kh-reveal mt-7 max-w-2xl text-pretty text-base leading-relaxed text-muted sm:text-lg md:text-xl"
           style={{ animationDelay: "320ms" }}
         >
           {hero.subhead}
@@ -98,7 +97,7 @@ export default function Hero() {
 
         {/* Trust strip */}
         <ul
-          className="kh-reveal mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-faint"
+          className="kh-reveal mt-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-2.5 text-xs text-faint sm:gap-x-6 sm:gap-y-3 sm:text-sm"
           style={{ animationDelay: "560ms" }}
         >
           {hero.highlights.map((h, i) => (
@@ -136,3 +135,6 @@ export default function Hero() {
     </section>
   );
 }
+
+
+

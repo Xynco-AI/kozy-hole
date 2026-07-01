@@ -5,7 +5,7 @@ import { cabins, cabinsIntro } from "@/lib/content";
 
 export default function Cabins() {
   return (
-    <section id="cabins" className="scroll-mt-24 py-24 sm:py-28">
+    <section id="cabins" className="scroll-mt-20 pt-10 pb-24 sm:pb-28">
       <Container>
         <SectionHeading
           eyebrow={cabinsIntro.eyebrow}
@@ -38,3 +38,6 @@ export default function Cabins() {
     </section>
   );
 }
+
+
+

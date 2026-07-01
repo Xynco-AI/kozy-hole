@@ -5,7 +5,7 @@ import { policies, rates, ratesIntro } from "@/lib/content";
 
 export default function Rates() {
   return (
-    <section id="rates" className="scroll-mt-24 py-24 sm:py-28">
+    <section id="rates" className="scroll-mt-20 pt-2 pb-24 sm:pb-28">
       <Container>
         <SectionHeading
           eyebrow={ratesIntro.eyebrow}
@@ -72,3 +72,7 @@ export default function Rates() {
     </section>
   );
 }
+
+
+
+

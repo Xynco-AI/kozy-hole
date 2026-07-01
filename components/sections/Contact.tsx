@@ -7,7 +7,7 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="scroll-mt-24 border-t border-hairline bg-surface/30 py-24 sm:py-28"
+      className="scroll-mt-20 border-t border-hairline bg-surface/30 pt-2 pb-24 sm:pb-28"
     >
       <Container>
         <SectionHeading
@@ -21,7 +21,7 @@ export default function Contact() {
           {/* Email */}
           <a
             href={`mailto:${contact.email}`}
-            className="group flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-hairline bg-canvas p-7 text-center transition-all duration-300 hover:-translate-y-1 hover:border-ice/30"
+            className="group flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-hairline bg-canvas p-4 sm:p-7 text-center transition-all duration-300 hover:-translate-y-1 hover:border-ice/30"
           >
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-ice/20 bg-ice-soft text-ice">
               <svg
@@ -52,7 +52,7 @@ export default function Contact() {
             <a
               key={o.phone}
               href={`tel:${o.phone.replace(/-/g, "")}`}
-              className="group flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-hairline bg-canvas p-7 text-center transition-all duration-300 hover:-translate-y-1 hover:border-ice/30"
+              className="group flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-hairline bg-canvas p-4 sm:p-7 text-center transition-all duration-300 hover:-translate-y-1 hover:border-ice/30"
             >
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-ice/20 bg-ice-soft text-ice">
                 <svg
@@ -106,3 +106,7 @@ export default function Contact() {
     </section>
   );
 }
+
+
+
+

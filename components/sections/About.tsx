@@ -4,7 +4,7 @@ import { about, business } from "@/lib/content";
 
 export default function About() {
   return (
-    <section id="about" className="scroll-mt-24 py-24 sm:py-28">
+    <section id="about" className="scroll-mt-20 pt-2 pb-24 sm:pb-28">
       <Container>
         <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.85fr] lg:gap-16">
           {/* Copy */}
@@ -43,3 +43,6 @@ export default function About() {
     </section>
   );
 }
+
+
+

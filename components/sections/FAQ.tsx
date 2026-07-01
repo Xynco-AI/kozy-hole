@@ -9,7 +9,7 @@ export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="scroll-mt-24 py-24 sm:py-28">
+    <section id="faq" className="scroll-mt-20 pt-2 pb-24 sm:pb-28">
       <Container>
         <SectionHeading
           eyebrow={faqIntro.eyebrow}
@@ -56,3 +56,6 @@ export default function FAQ() {
     </section>
   );
 }
+
+
+

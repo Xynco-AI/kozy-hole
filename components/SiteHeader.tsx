@@ -14,6 +14,22 @@ export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
+  function scrollToHash(href: string) {
+    const id = href.startsWith("#") ? href.slice(1) : null;
+    if (!id) return false;
+    const el = document.getElementById(id);
+    if (!el) return false;
+    const y = el.getBoundingClientRect().top + window.scrollY - 72;
+    window.scrollTo({ top: y, behavior: "smooth" });
+    return true;
+  }
+
+  function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (href.startsWith("#") && scrollToHash(href)) {
+      e.preventDefault();
+    }
+  }
+
   // Solidify the bar once the hero scrolls under it.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -45,7 +61,7 @@ export default function SiteHeader() {
           className="group flex items-center gap-3"
           aria-label={`${business.name} — home`}
         >
-          <span className="relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl">
+          <span className="relative inline-flex h-11 w-11 items-center justify-center">
             <Image
               src={business.logo}
               alt=""
@@ -72,6 +88,7 @@ export default function SiteHeader() {
               <Link
                 key={item.href}
                 href={href}
+                onClick={(e) => handleNavClick(e, item.href)}
                 className="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
               >
                 {item.label}
@@ -130,7 +147,13 @@ export default function SiteHeader() {
                   <Link
                     key={item.href}
                     href={href}
-                    onClick={() => setOpen(false)}
+                    onClick={(e) => {
+                      if (item.href.startsWith("#")) {
+                        e.preventDefault();
+                        setOpen(false);
+                        setTimeout(() => scrollToHash(item.href), 300);
+                      }
+                    }}
                     className="rounded-xl px-4 py-3 text-lg font-medium text-muted transition-colors hover:bg-white/[0.04] hover:text-ink"
                   >
                     {item.label}

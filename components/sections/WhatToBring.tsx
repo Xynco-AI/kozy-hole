@@ -4,7 +4,7 @@ import { whatToBring, whatToBringIntro } from "@/lib/content";
 
 export default function WhatToBring() {
   return (
-    <section className="py-24 sm:py-28">
+    <section className="pt-2 pb-24 sm:pb-28">
       <Container>
         <SectionHeading
           eyebrow={whatToBringIntro.eyebrow}
@@ -32,3 +32,7 @@ export default function WhatToBring() {
     </section>
   );
 }
+
+
+
+

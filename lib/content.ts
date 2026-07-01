@@ -197,7 +197,6 @@ export const amenities: AmenityGroup[] = [
     icon: "fish",
     items: [
       "Fishing rods & tackle included",
-      "1 tub of minnows included",
       "Underwater fish camera",
     ],
   },
@@ -406,7 +405,7 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "What is included in the rental?",
-    a: "Everything you need to fish and stay comfortable: a heated and insulated shack, 6 to 8 pre-drilled holes with safety covers, fishing rods and tackle, 1 tub of minnows, an underwater fish camera, all propane for heat and cooking, full solar power, Smart TV with satellite internet and forward-facing sonar feed, Coleman stove and BBQ, pots, pans, utensils, coffee pot, paper towel, soap, garbage bags, and access to the shared heated washroom.",
+    a: "Everything you need to fish and stay comfortable: a heated and insulated shack, 6 to 8 pre-drilled holes with safety covers, fishing rods and tackle, an underwater fish camera, all propane for heat and cooking, full solar power, Smart TV with satellite internet and forward-facing sonar feed, Coleman stove and BBQ, pots, pans, utensils, coffee pot, paper towel, soap, garbage bags, and access to the shared heated washroom.",
   },
   {
     q: "What do I need to bring?",

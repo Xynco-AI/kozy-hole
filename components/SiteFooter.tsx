@@ -16,13 +16,13 @@ export default function SiteFooter() {
           {/* Brand + season */}
           <div>
             <div className="flex items-center gap-3">
-              <span className="relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ring-1 ring-hairline">
+              <span className="relative inline-flex h-12 w-12 items-center justify-center">
                 <Image
                   src={business.logo}
                   alt={`${business.name} logo`}
                   fill
                   sizes="48px"
-                  className="object-cover"
+                  className="object-contain"
                 />
               </span>
               <span className="flex flex-col leading-none">
@@ -91,6 +91,17 @@ export default function SiteFooter() {
         <div className="mt-14 flex flex-col gap-3 border-t border-hairline pt-6 text-xs text-faint sm:flex-row sm:items-center sm:justify-between">
           <p>{footer.rightsLine}</p>
           <p>Season {business.season} · Pet-friendly</p>
+          <p>
+            Made by{" "}
+            <a
+              href="https://xynco.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <span className="text-ice">x</span><span className="text-white">ynco.io</span>
+            </a>
+          </p>
         </div>
       </Container>
     </footer>

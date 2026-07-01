@@ -48,7 +48,7 @@ export default function Reviews({ reviews }: { reviews: ReviewData[] }) {
   return (
     <section
       id="reviews"
-      className="scroll-mt-24 border-y border-hairline bg-surface/30 py-24 sm:py-28"
+      className="scroll-mt-20 border-y border-hairline bg-surface/30 pt-2 pb-24 sm:pb-28"
     >
       <Container>
         <div className="grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
@@ -100,3 +100,7 @@ export default function Reviews({ reviews }: { reviews: ReviewData[] }) {
     </section>
   );
 }
+
+
+
+

@@ -7,7 +7,7 @@ export default function Amenities() {
   return (
     <section
       id="amenities"
-      className="scroll-mt-24 border-y border-hairline bg-surface/30 py-24 sm:py-28"
+      className="scroll-mt-20 border-y border-hairline bg-surface/30 pt-2 pb-24 sm:pb-28"
     >
       <Container>
         <SectionHeading
@@ -20,7 +20,7 @@ export default function Amenities() {
           {amenities.map((group) => (
             <div
               key={group.title}
-              className="group flex flex-col gap-4 p-7"
+              className="group flex flex-col gap-4 p-4 sm:p-7"
             >
               <div className="flex items-center gap-3.5">
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-ice/20 bg-ice-soft text-ice transition-colors duration-300 group-hover:border-ice/40">
@@ -70,3 +70,6 @@ export default function Amenities() {
     </section>
   );
 }
+
+
+

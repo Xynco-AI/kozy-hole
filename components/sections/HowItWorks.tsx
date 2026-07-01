@@ -7,7 +7,7 @@ export default function HowItWorks() {
   return (
     <section
       id="location"
-      className="scroll-mt-24 border-y border-hairline bg-surface/30 py-24 sm:py-28"
+      className="scroll-mt-20 border-y border-hairline bg-surface/30 pt-2 pb-24 sm:pb-28"
     >
       <Container>
         <SectionHeading
@@ -103,3 +103,6 @@ export default function HowItWorks() {
     </section>
   );
 }
+
+
+
