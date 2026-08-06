@@ -18,7 +18,7 @@ export async function sendOwnerRequestAlert(bookingId: string) {
   const { error } = await resend.emails.send({
     from: FROM,
     to: process.env.OWNER_EMAIL!,
-    subject: `New booking request — ${b.guest_name} (${b.check_in} to ${b.check_out})`,
+    subject: `New booking request - ${b.guest_name} (${b.check_in} to ${b.check_out})`,
     html: `
       <h2>New booking request</h2>
       <p><b>${b.guest_name}</b> · ${b.email} · ${b.phone}</p>
@@ -38,7 +38,7 @@ export async function sendGuestApproved(bookingId: string, payUrl: string) {
   const { error } = await resend.emails.send({
     from: FROM,
     to: b.email,
-    subject: 'Your Kozy Hole booking is approved — pay your deposit',
+    subject: 'Your Kozy Hole booking is approved - pay your deposit',
     html: `
       <h2>You're approved!</h2>
       <p>${b.check_in} to ${b.check_out}. To lock it in, pay your 50% deposit ($${b.deposit_amount}).</p>
@@ -74,7 +74,7 @@ export async function sendDamageDepositRequest(bookingId: string, cabinCount: nu
   const { error } = await resend.emails.send({
     from: FROM,
     to: b.email,
-    subject: 'Action required: Authorize your damage deposit — Kozy Hole',
+    subject: 'Action required: Authorize your damage deposit - Kozy Hole',
     html: `
       <h2>Your stay is almost here!</h2>
       <p>Hi ${b.guest_name},</p>
@@ -105,7 +105,7 @@ export async function sendCancellation(bookingId: string) {
         <strong>${formatDate(b.check_in)} → ${formatDate(b.check_out)}</strong>
         has been cancelled and those dates have been released.</p>
       <p>If you cancelled with at least a week's notice, you may be eligible for a credit toward
-        a future stay — we'll be in touch.</p>
+        a future stay - we'll be in touch.</p>
       <p>We hope to host you another time at Kozy Hole!</p>`,
   })
   if (error) console.error('sendCancellation failed', { bookingId, error })
