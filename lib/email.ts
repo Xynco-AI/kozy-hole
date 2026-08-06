@@ -43,7 +43,8 @@ export async function sendGuestApproved(bookingId: string, payUrl: string) {
       <h2>You're approved!</h2>
       <p>${b.check_in} to ${b.check_out}. To lock it in, pay your 50% deposit ($${b.deposit_amount}).</p>
       <p><a href="${payUrl}">Pay by card</a> (3% fee) or e-transfer $${b.deposit_amount} to ${process.env.OWNER_EMAIL} (no additional fee, note your name + dates).</p>
-      <p>We hold your dates for 48 hours.</p>`,
+      <p>We hold your dates for 48 hours.</p>
+      <p><strong>Heads up:</strong> 3 days before your stay you'll receive a separate email to authorize a $500/cabin damage deposit hold on your card. It's a hold only — not a charge — and it's released after checkout if the shack is left in good condition. Watch for that email closer to your trip.</p>`,
   })
   if (error) console.error('sendGuestApproved failed', { bookingId, error })
 }

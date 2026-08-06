@@ -396,7 +396,11 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "What is due when I arrive?",
-    a: "The remaining 50% balance, a $500 damage deposit per cabin, and the $50 pet fee if you are bringing a dog. The damage deposit is returned after checkout if the shack is left in good condition.",
+    a: "The remaining 50% balance and the $50 pet fee if you are bringing a dog. The $500/cabin damage deposit is handled online — 3 days before your stay you'll receive an email with a link to authorize a hold on your card. It is a hold only, not a charge, and it is released after checkout if the shack is left in good condition.",
+  },
+  {
+    q: "What is the damage deposit and how does it work?",
+    a: "Three days before your stay, you'll receive an email from us with a link to authorize a $500 per cabin hold on your card through Stripe. This is a pre-authorization hold — your card is not charged. After checkout, we log in and release the hold if the shack is left in good shape. If there is damage, the hold may be captured to cover the cost. Watch for that email a few days before your trip.",
   },
   {
     q: "What is your cancellation policy?",
