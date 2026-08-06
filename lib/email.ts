@@ -44,7 +44,7 @@ export async function sendGuestApproved(bookingId: string, payUrl: string) {
       <p>${b.check_in} to ${b.check_out}. To lock it in, pay your 50% deposit ($${b.deposit_amount}).</p>
       <p><a href="${payUrl}">Pay by card</a> (3% fee) or e-transfer $${b.deposit_amount} to ${process.env.OWNER_EMAIL} (no additional fee, note your name + dates).</p>
       <p>We hold your dates for 48 hours.</p>
-      <p><strong>Heads up:</strong> 3 days before your stay you'll receive a separate email to authorize a $500/cabin damage deposit hold on your card. It's a hold only — not a charge — and it's released after checkout if the shack is left in good condition. Watch for that email closer to your trip.</p>`,
+      <p><strong>Heads up:</strong> 3 days before your stay you'll receive a separate email to authorize a $500/cabin damage deposit hold on your card. It is a hold only, not a charge, and it is released after checkout if the shack is left in good condition. Watch for that email closer to your trip.</p>`,
   })
   if (error) console.error('sendGuestApproved failed', { bookingId, error })
 }
@@ -55,7 +55,7 @@ export async function sendConfirmation(bookingId: string) {
     from: FROM, to: b.email,
     subject: 'Your Kozy Hole booking is confirmed',
     html: `<h2>Confirmed!</h2><p>${b.check_in} to ${b.check_out}. Check-in 1 PM, check-out 11 AM.</p>
-      <p>You'll receive a separate email 3 days before your stay with a link to authorize your $500/cabin damage deposit hold online — it's a hold only, not a charge, and it's released after checkout.</p>
+      <p>You'll receive a separate email 3 days before your stay with a link to authorize your $500/cabin damage deposit hold online. It is a hold only, not a charge, and it is released after checkout.</p>
       <p>Remaining balance${b.has_pet ? ' and the $50 pet fee' : ''} ${b.has_pet ? 'are' : 'is'} due on arrival. We'll meet you at the lake and point you to your shack.</p>`,
   })
   if (guestRes.error) console.error('sendConfirmation (guest) failed', { bookingId, error: guestRes.error })
@@ -80,7 +80,7 @@ export async function sendDamageDepositRequest(bookingId: string, cabinCount: nu
       <p>Hi ${b.guest_name},</p>
       <p>Your Kozy Hole stay starts on <strong>${formatDate(b.check_in)}</strong>.</p>
       <p>Before you arrive, please authorize a <strong>$${depositTotal} CAD damage deposit hold</strong> on your card.
-        This is a hold only — your card is not charged. It will be released after checkout if the shack is left in good condition.</p>
+        This is a hold only. Your card is not charged. It will be released after checkout if the shack is left in good condition.</p>
       <p style="margin:24px 0">
         <a href="${depositUrl}" style="background:#1b6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600">
           Authorize damage deposit →
