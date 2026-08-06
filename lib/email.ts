@@ -53,9 +53,9 @@ export async function sendConfirmation(bookingId: string) {
   const guestRes = await resend.emails.send({
     from: FROM, to: b.email,
     subject: 'Your Kozy Hole booking is confirmed',
-    html: `<h2>Confirmed!</h2><p>${b.check_in} to ${b.check_out}. Check-in 1 PM, check-out 11 AM.
-      Balance, $500/cabin damage deposit${b.has_pet ? ', and the $50 pet fee' : ''} are due on arrival.
-      We'll meet you at the lake and point you to your shack.</p>`,
+    html: `<h2>Confirmed!</h2><p>${b.check_in} to ${b.check_out}. Check-in 1 PM, check-out 11 AM.</p>
+      <p>You'll receive a separate email 3 days before your stay with a link to authorize your $500/cabin damage deposit hold online — it's a hold only, not a charge, and it's released after checkout.</p>
+      <p>Remaining balance${b.has_pet ? ' and the $50 pet fee' : ''} ${b.has_pet ? 'are' : 'is'} due on arrival. We'll meet you at the lake and point you to your shack.</p>`,
   })
   if (guestRes.error) console.error('sendConfirmation (guest) failed', { bookingId, error: guestRes.error })
   const ownerRes = await resend.emails.send({
@@ -64,6 +64,31 @@ export async function sendConfirmation(bookingId: string) {
     html: `<p>Deposit paid. ${b.guest_name} · ${b.phone} · ${b.email}</p>`,
   })
   if (ownerRes.error) console.error('sendConfirmation (owner) failed', { bookingId, error: ownerRes.error })
+}
+
+export async function sendDamageDepositRequest(bookingId: string, cabinCount: number) {
+  const b = await getBooking(bookingId)
+  const depositTotal = cabinCount * 500
+  const depositUrl = `${site}/booking/${bookingId}/damage-deposit`
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: b.email,
+    subject: 'Action required: Authorize your damage deposit — Kozy Hole',
+    html: `
+      <h2>Your stay is almost here!</h2>
+      <p>Hi ${b.guest_name},</p>
+      <p>Your Kozy Hole stay starts on <strong>${formatDate(b.check_in)}</strong>.</p>
+      <p>Before you arrive, please authorize a <strong>$${depositTotal} CAD damage deposit hold</strong> on your card.
+        This is a hold only — your card is not charged. It will be released after checkout if the shack is left in good condition.</p>
+      <p style="margin:24px 0">
+        <a href="${depositUrl}" style="background:#1b6;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600">
+          Authorize damage deposit →
+        </a>
+      </p>
+      <p>Questions? Reply to this email or text Rob at 780-910-7902.</p>
+      <p>See you on the ice,<br>Rob &amp; Jason<br>Kozy Hole Ice Shack Rentals</p>`,
+  })
+  if (error) console.error('sendDamageDepositRequest failed', { bookingId, error })
 }
 
 export async function sendCancellation(bookingId: string) {
