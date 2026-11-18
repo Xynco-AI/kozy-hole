@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import Container from "@/components/Container";
 import Button from "@/components/Button";
 import { supabaseAdmin } from "@/lib/supabase";
-import { getStripe } from "@/lib/stripe";
+import { depositCardCents } from "@/lib/deposit-payment";
 import { formatDate, parseLocalDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -151,26 +151,12 @@ export default async function BookingPage({
   if (status === "APPROVED") {
     const depositAmount: number = b.deposit_amount ?? 0;
 
-    // Try to retrieve the Stripe checkout session.
-    let stripeUrl: string | null = null;
-    let stripeTotal: number | null = null;
-    if (b.stripe_session_id) {
-      try {
-        const session = await getStripe().checkout.sessions.retrieve(
-          b.stripe_session_id
-        );
-        stripeUrl = session.url ?? null;
-        stripeTotal = session.amount_total ?? null;
-      } catch {
-        stripeUrl = null;
-      }
-    }
-
-    // Card total: use Stripe's amount_total (already includes fee) or estimate +3%.
-    const cardTotalDisplay =
-      stripeTotal !== null
-        ? money(stripeTotal / 100)
-        : money(depositAmount * 1.03);
+    // The pay route creates (or reuses) a live Stripe Checkout session on click,
+    // so the card option works for the whole 48h hold, not just Stripe's 24h.
+    const stripeUrl = `/api/bookings/${b.id}/pay`;
+    const cardTotalDisplay = money(
+      depositCardCents({ card_charge: b.card_charge ?? null, deposit_amount: depositAmount }) / 100
+    );
 
     return (
       <>
