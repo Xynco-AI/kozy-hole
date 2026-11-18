@@ -33,7 +33,7 @@ export default function CabinPicker({ cabins, selected, onChange }: Props) {
         const photo =
           cabin.photos && cabin.photos.length > 0
             ? cabin.photos[0]
-            : "/brand/shack-exterior-1.png";
+            : "/brand/cabin-1.webp";
 
         return (
           <button

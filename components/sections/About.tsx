@@ -30,7 +30,7 @@ export default function About() {
           {/* Photo */}
           <div className="relative aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] border border-hairline">
             <Image
-              src="/brand/cabin-3.png"
+              src="/brand/cabin-3.webp"
               alt="Inside a Kozy Hole shack — four bunks with memory-foam mattresses, LED ceiling lighting, and a wall-mounted TV."
               fill
               sizes="(min-width: 1024px) 40vw, 100vw"

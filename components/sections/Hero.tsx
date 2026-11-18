@@ -19,7 +19,7 @@ export default function Hero() {
       {/* Hero background image */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <Image
-          src="/brand/hero-sky.png"
+          src="/brand/hero-sky.webp"
           alt=""
           fill
           priority
@@ -33,7 +33,7 @@ export default function Hero() {
         <div className="kh-reveal" style={{ animationDelay: "0ms" }}>
           <div className="relative mx-auto h-32 w-32 sm:h-44 sm:w-44 lg:h-56 lg:w-56">
             <Image
-              src="/brand/logo.png"
+              src="/brand/logo.webp"
               alt="Kozy Hole Ice Shack Rentals"
               fill
               priority

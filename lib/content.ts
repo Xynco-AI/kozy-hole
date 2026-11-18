@@ -59,7 +59,7 @@ export const business = {
   location: "Lac la Biche Lake, Alberta",
   town: "Lac la Biche",
   season: "December 15 – March 31",
-  logo: "/brand/logo.png",
+  logo: "/brand/logo.webp",
 } as const;
 
 export const contact = {
@@ -120,7 +120,7 @@ export const cabins: Cabin[] = [
     slug: "cabin-one",
     name: "Cabin One",
     sleeps: "Sleeps 4 (5 with cot)",
-    photo: "/brand/cabin-1.png",
+    photo: "/brand/cabin-1.webp",
     photoAlt:
       "Modern dark ice shack with an open front showing bunk beds and a dining table, under a blue sky.",
     features: [
@@ -134,7 +134,7 @@ export const cabins: Cabin[] = [
     slug: "cabin-two",
     name: "Cabin Two",
     sleeps: "Sleeps 4 (5 with cot)",
-    photo: "/brand/cabin-2.png",
+    photo: "/brand/cabin-2.webp",
     photoAlt:
       "Ice shack interior with bunk beds, wood-panelled walls and recessed lighting.",
     features: [
@@ -148,7 +148,7 @@ export const cabins: Cabin[] = [
     slug: "cabin-three",
     name: "Cabin Three",
     sleeps: "Sleeps 4 (5 with cot)",
-    photo: "/brand/cabin-interior-2.png",
+    photo: "/brand/cabin-interior-2.webp",
     photoAlt:
       "Ice shack interior with light wood ceiling, industrial storage cabinet, dining table and chairs.",
     features: [
@@ -314,7 +314,7 @@ export const location = {
   body: "We're out on Lac la Biche Lake, near the town of Lac la Biche, Alberta. We meet you at the lake, and your exact shack location is confirmed closer to your stay, based on ice conditions, so you're always set up on safe, good ice.",
   seasonLabel: "Season",
   season: "December 15 – March 31",
-  photo: "/brand/frozen-lake.png",
+  photo: "/brand/frozen-lake.webp",
   photoAlt:
     "Aerial drone shot of Lac la Biche lake shoreline with forest and blue sky.",
 };
