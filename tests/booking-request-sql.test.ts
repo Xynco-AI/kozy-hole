@@ -1,0 +1,116 @@
+/**
+ * Runs the real migrations in an in-process Postgres (PGlite) and exercises
+ * create_booking_request(). PGlite is single-connection, so this covers the
+ * overlap/atomicity logic; the cross-request race is handled by the per-cabin
+ * advisory locks in the function, which need a real multi-connection server to test.
+ */
+import { describe, it, expect, beforeEach } from 'vitest'
+import { PGlite } from '@electric-sql/pglite'
+import { readFileSync, readdirSync } from 'fs'
+import path from 'path'
+
+const MIGRATIONS = path.join(__dirname, '..', 'supabase', 'migrations')
+
+let db: PGlite
+let cabinA: string
+let cabinB: string
+
+beforeEach(async () => {
+  db = new PGlite()
+  // Supabase roles referenced by the migrations
+  await db.exec(`create role anon; create role authenticated; create role service_role;`)
+  for (const f of readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort()) {
+    await db.exec(readFileSync(path.join(MIGRATIONS, f), 'utf8'))
+  }
+  const { rows } = await db.query<{ id: string }>(
+    `insert into cabins (slug, name, sort_order) values ('a','A',1), ('b','B',2) returning id`)
+  ;[cabinA, cabinB] = rows.map(r => r.id)
+})
+
+type RpcResult = { ok: boolean; booking_id?: string; error?: string; cabin_id?: string }
+
+async function request(checkIn: string, checkOut: string, cabinIds: string[]): Promise<RpcResult> {
+  const { rows } = await db.query<{ r: RpcResult }>(
+    `select create_booking_request(
+       p_guest_name => 'Test Guest', p_email => 'g@example.com', p_phone => '7805550000',
+       p_party_size => 4, p_has_pet => false,
+       p_check_in => $1::date, p_check_out => $2::date, p_nights => 2,
+       p_nightly_subtotal => 800, p_gst => 40, p_total => 840,
+       p_deposit_amount => 420, p_card_charge => 432.6,
+       p_approval_token => 'tok', p_addons => '{}'::text[],
+       p_cabin_ids => $3::uuid[], p_party_members => array['Friend One']
+     ) as r`,
+    [checkIn, checkOut, cabinIds])
+  return rows[0].r
+}
+
+async function count(table: string): Promise<number> {
+  const { rows } = await db.query<{ n: number }>(`select count(*)::int as n from ${table}`)
+  return rows[0].n
+}
+
+describe('create_booking_request', () => {
+  it('creates the booking, its cabins and the waiver together', async () => {
+    const r = await request('2027-01-15', '2027-01-17', [cabinA, cabinB])
+    expect(r.ok).toBe(true)
+    const { rows } = await db.query<{ status: string; card_charge: string }>(
+      `select status, card_charge from bookings where id = $1`, [r.booking_id])
+    expect(rows[0]).toEqual({ status: 'REQUESTED', card_charge: '432.60' })
+    expect(await count('booking_cabins')).toBe(2)
+    expect(await count('waivers')).toBe(1)
+  })
+
+  it('rejects a request overlapping an active booking on the same cabin', async () => {
+    await request('2027-01-15', '2027-01-17', [cabinA])
+    const r = await request('2027-01-16', '2027-01-18', [cabinA])
+    expect(r).toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinA })
+    expect(await count('bookings')).toBe(1)
+  })
+
+  it('allows back-to-back stays (check-out day = next check-in day)', async () => {
+    await request('2027-01-15', '2027-01-17', [cabinA])
+    expect((await request('2027-01-17', '2027-01-19', [cabinA])).ok).toBe(true)
+  })
+
+  it('allows the same dates on a different cabin', async () => {
+    await request('2027-01-15', '2027-01-17', [cabinA])
+    expect((await request('2027-01-15', '2027-01-17', [cabinB])).ok).toBe(true)
+  })
+
+  it('ignores declined, expired and cancelled bookings', async () => {
+    for (const status of ['DECLINED', 'EXPIRED', 'CANCELLED']) {
+      const first = await request('2027-01-15', '2027-01-17', [cabinA])
+      await db.query(`update bookings set status = $1 where id = $2`, [status, first.booking_id])
+    }
+    expect((await request('2027-01-15', '2027-01-17', [cabinA])).ok).toBe(true)
+  })
+
+  it('treats approved and confirmed bookings as holding the cabin', async () => {
+    for (const status of ['APPROVED', 'CONFIRMED']) {
+      const db2 = await request('2027-02-01', '2027-02-03', [cabinA])
+      await db.query(`update bookings set status = $1 where id = $2`, [status, db2.booking_id])
+      expect((await request('2027-02-02', '2027-02-04', [cabinA])).ok).toBe(false)
+      await db.query(`update bookings set status = 'CANCELLED' where id = $1`, [db2.booking_id])
+    }
+  })
+
+  it('rejects dates the owner has blocked', async () => {
+    await db.query(`insert into blocked_dates (cabin_id, start_date, end_date) values ($1, '2027-01-10', '2027-01-20')`, [cabinA])
+    expect(await request('2027-01-15', '2027-01-17', [cabinA]))
+      .toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinA })
+  })
+
+  it('inserts nothing when any one of several cabins is taken', async () => {
+    await request('2027-01-15', '2027-01-17', [cabinB])
+    const r = await request('2027-01-15', '2027-01-17', [cabinA, cabinB])
+    expect(r).toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinB })
+    expect(await count('bookings')).toBe(1)
+    expect(await count('booking_cabins')).toBe(1)
+    expect(await count('waivers')).toBe(1)
+  })
+
+  it('cannot be called with the public anon key', async () => {
+    await db.exec(`set role anon`)
+    await expect(request('2027-01-15', '2027-01-17', [cabinA])).rejects.toThrow(/permission denied/)
+  })
+})
