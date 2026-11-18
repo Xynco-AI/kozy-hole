@@ -34,6 +34,21 @@ function fmtDate(d: string): string {
 }
 
 // ─── page ─────────────────────────────────────────────────────────────────────
+function SummaryRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-hairline py-2.5 text-sm last:border-0">
+      <span className="text-muted">{label}</span>
+      <span className="font-medium text-ink">{value}</span>
+    </div>
+  );
+}
+
 export default async function BookingPage({
   params,
   searchParams,
@@ -88,31 +103,14 @@ export default async function BookingPage({
   // ── Shared summary block ───────────────────────────────────────────────────
   const nights = nightsBetween(b.check_in, b.check_out);
 
-  function SummaryRow({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string | number;
-  }) {
-    return (
-      <div className="flex items-baseline justify-between gap-4 border-b border-hairline py-2.5 text-sm last:border-0">
-        <span className="text-muted">{label}</span>
-        <span className="font-medium text-ink">{value}</span>
-      </div>
-    );
-  }
-
-  function MiniSummary() {
-    return (
-      <div className="mt-8 rounded-xl border border-hairline bg-surface-2/60 px-5 py-1">
-        <SummaryRow label="Check-in" value={fmtDate(b!.check_in)} />
-        <SummaryRow label="Check-out" value={fmtDate(b!.check_out)} />
-        <SummaryRow label="Nights" value={nights} />
-        <SummaryRow label="Party size" value={b!.party_size ?? "—"} />
-      </div>
-    );
-  }
+  const miniSummary = (
+    <div className="mt-8 rounded-xl border border-hairline bg-surface-2/60 px-5 py-1">
+      <SummaryRow label="Check-in" value={fmtDate(b.check_in)} />
+      <SummaryRow label="Check-out" value={fmtDate(b.check_out)} />
+      <SummaryRow label="Nights" value={nights} />
+      <SummaryRow label="Party size" value={b.party_size ?? "—"} />
+    </div>
+  );
 
   const status: string = (b.status ?? "").toUpperCase();
 
@@ -139,7 +137,7 @@ export default async function BookingPage({
                 approved — usually quickly. Your dates are on hold in the
                 meantime.
               </p>
-              <MiniSummary />
+              {miniSummary}
             </div>
           </Container>
         </main>
@@ -245,7 +243,7 @@ export default async function BookingPage({
                 We hold your dates for 48 hours.
               </p>
 
-              <MiniSummary />
+              {miniSummary}
             </div>
           </Container>
         </main>
@@ -444,7 +442,7 @@ export default async function BookingPage({
                 {b.status ?? "Unknown"}
               </span>
             </p>
-            <MiniSummary />
+            {miniSummary}
           </div>
         </Container>
       </main>

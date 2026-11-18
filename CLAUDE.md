@@ -41,7 +41,14 @@ How a booking moves through the system:
 1. `app/book/actions.ts` (`createBookingRequest`, a server action) validates input with Zod and prices the stay with `quote()`. It then calls the Postgres function `create_booking_request` (migration `0005`). That function locks each cabin, checks for overlaps with active bookings and `blocked_dates`, and inserts `bookings`, `booking_cabins` and `waivers` in one transaction. The action then emails the owner. Overlap rules live only in that SQL function, and `tests/booking-request-sql.test.ts` runs every migration in PGlite (an in-process Postgres) to test it.
 2. The owner approves in one of two ways. The emailed link `GET /api/bookings/[id]/approve?token=…` is checked against `approval_token`. The dashboard at `/owner/[secret]` is checked against `OWNER_DASHBOARD_SECRET`. Both call `approveBooking()` in `lib/booking-approval.ts`. That function updates the DB first, then creates the Stripe Checkout session for the 50% deposit, then emails the guest.
 3. `POST /api/stripe/webhook` handles `checkout.session.completed`. When `metadata.type === 'damage_deposit'`, it records the $500/cabin pre-auth hold. Otherwise it flips APPROVED to CONFIRMED and sends the confirmation email.
-4. Vercel crons (`vercel.json`) call `/api/cron/expire-holds`, which expires APPROVED bookings that are still unpaid after 48h, and `/api/cron/send-deposit-reminders`, which sends the damage-deposit request 3 days before check-in. Both require `Authorization: Bearer $CRON_SECRET` and reject the request if it is not set.
+4. Vercel crons (`vercel.json`) run once a day and require `Authorization: Bearer $CRON_SECRET` (they reject the request if it is not set).
+   - `/api/cron/expire-holds` applies the rules in `lib/daily-jobs.ts`. It expires APPROVED bookings 48h after approval and emails the guest. It sends one "pay your deposit" reminder at 24h. It emails the owner a list of REQUESTED bookings older than 24h. It never auto-declines a future request, and only expires REQUESTED bookings whose check-in has already passed.
+   - `/api/cron/send-deposit-reminders` sends the damage-deposit request 3 days before check-in.
+   - Card checkout sessions are created with `expires_at` capped at the end of the 48h hold, so a card can't be charged after the hold lapses.
+
+**Owner can change cabins** on a REQUESTED booking from the dashboard. This calls the Postgres function `update_booking_cabins` (migration `0007`), which re-checks availability and stores the re-priced amounts.
+
+**Email content** lives in `lib/email-templates.ts` as pure, tested functions. `lib/email.ts` only loads the booking and sends. Add-on menu and prices are in `lib/addons.ts`; the stored label must stay stable because bookings store it.
 
 **Auth:** there are no user accounts. Access is controlled by secrets in URLs: a per-booking `approval_token` and the dashboard secret. Compare them with `safeEqual()` from `lib/tokens.ts`, which is timing-safe.
 

@@ -116,7 +116,56 @@ export function ownerConfirmed(b: EmailBooking): Email {
   }
 }
 
+export function ownerPendingReminder(bookings: EmailBooking[], l: { dashboardUrl: string }): Email {
+  const n = bookings.length
+  const rows = bookings
+    .map(b => `<li><b>${e(b.guest_name)}</b>: ${e(dates(b))}, ${e(b.cabins.join(', ') || 'no cabin')}, ${money(b.total)}</li>`)
+    .join('')
+  return {
+    subject: `Reminder: ${plural(n, 'booking request')} waiting for your approval`,
+    html: `
+      <h2>${n === 1 ? 'A guest is' : `${n} guests are`} waiting to hear back</h2>
+      <p>These requests have been waiting more than a day. Their cabins stay blocked for those dates until you approve or decline.</p>
+      <ul>${rows}</ul>
+      <p>${button(l.dashboardUrl, 'Open your dashboard')}</p>`,
+  }
+}
+
 // ─── Guest ───────────────────────────────────────────────────────────────────
+
+/** "Mon, Jan 11, 1:00 p.m." in Alberta time. */
+function albertaDateTime(d: Date): string {
+  return d.toLocaleString('en-CA', {
+    timeZone: 'America/Edmonton', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
+}
+
+export function guestPaymentReminder(
+  b: EmailBooking, l: { payUrl: string; etransferEmail: string; holdEndsAt: Date },
+): Email {
+  return {
+    subject: 'Reminder: pay your deposit to keep your Kozy Hole dates',
+    html: `
+      <h2>Your dates are still on hold</h2>
+      <p>Your stay ${e(dates(b))} is approved, but we haven't received your deposit yet.
+        We're holding your dates until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time).</p>
+      <p>${button(l.payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>
+      <p>Or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      <p>Already paid by e-transfer? Thanks! We'll confirm as soon as it lands.</p>`,
+  }
+}
+
+export function guestHoldExpired(b: EmailBooking, l: { bookUrl: string }): Email {
+  return {
+    subject: 'Your Kozy Hole hold has expired',
+    html: `
+      <h2>Your hold has expired</h2>
+      <p>Hi ${e(b.guest_name)}, we didn't receive the deposit for ${e(dates(b))} within 48 hours, so those dates have been released.</p>
+      <p>Still want to come? If the dates are free you can send a new request any time.</p>
+      <p>${button(l.bookUrl, 'Book again')}</p>
+      <p>If you already sent an e-transfer, just reply to this email and we'll sort it out.</p>`,
+  }
+}
 
 export function guestRequestReceived(b: EmailBooking, l: { statusUrl: string }): Email {
   return {

@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendDamageDepositRequest } from '@/lib/email'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail closed: if CRON_SECRET is unset, "Bearer undefined" must not get in.
+  const secret = process.env.CRON_SECRET
+  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
     return new NextResponse('unauthorized', { status: 401 })
   }
 

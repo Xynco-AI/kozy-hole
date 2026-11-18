@@ -46,9 +46,12 @@ export async function createDepositCheckout(params: {
   amountCents: number
   guestEmail: string
   description: string
+  /** Unix seconds. Omitted = Stripe default (24h). */
+  expiresAt?: number
 }) {
   return getStripe().checkout.sessions.create({
     mode: 'payment',
+    ...(params.expiresAt ? { expires_at: params.expiresAt } : {}),
     customer_email: params.guestEmail,
     line_items: [{
       quantity: 1,

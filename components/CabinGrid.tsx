@@ -7,11 +7,8 @@ import type { Cabin } from "@/lib/content";
 
 export default function CabinGrid({ cabins }: { cabins: Cabin[] }) {
   const [open, setOpen] = useState<Cabin | null>(null);
-  const [mounted, setMounted] = useState(false);
 
   const close = useCallback(() => setOpen(null), []);
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -95,7 +92,8 @@ export default function CabinGrid({ cabins }: { cabins: Cabin[] }) {
         ))}
       </div>
 
-      {mounted && open && createPortal(
+      {/* open is only set by a click, so this never runs during server render */}
+      {open && createPortal(
         <div
           style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}
           className="bg-black/90 backdrop-blur-md"

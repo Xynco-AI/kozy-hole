@@ -5,6 +5,45 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
 import { sendConfirmation, sendCancellation } from '@/lib/email'
 import { approveBooking, declineBooking } from '@/lib/booking-approval'
+import { redirect } from 'next/navigation'
+import { quote } from '@/lib/pricing'
+import { parseLocalDate } from '@/lib/dates'
+
+// ─── ownerChangeCabins ────────────────────────────────────────────────────────
+// Change which cabins a pending request is for (e.g. a guest who picked all 3 by
+// mistake). Re-prices and re-checks availability atomically in Postgres
+// (update_booking_cabins, migration 0007). Result shown via ?notice= on the dashboard.
+export async function ownerChangeCabins(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  const bookingId = formData.get('bookingId') as string | null
+  const cabinIds = formData.getAll('cabinIds').map(String)
+  if (!secretOk(secret) || !bookingId) return
+
+  let notice = 'error'
+  try {
+    const db = supabaseAdmin()
+    const { data: b } = await db.from('bookings').select('check_in,check_out').eq('id', bookingId).single()
+    if (b) {
+      const q = quote(parseLocalDate(b.check_in), parseLocalDate(b.check_out), new Set(cabinIds).size)
+      const { data, error } = await db.rpc('update_booking_cabins', {
+        p_booking_id: bookingId,
+        p_cabin_ids: cabinIds,
+        p_nightly_subtotal: q.nightlySubtotal,
+        p_gst: q.gst,
+        p_total: q.total,
+        p_deposit_amount: q.deposit,
+        p_card_charge: q.cardCharge,
+      })
+      if (error) console.error('update_booking_cabins failed', error)
+      else notice = data?.ok ? 'cabins-updated' : String(data?.error ?? 'error').toLowerCase()
+    }
+  } catch (e) {
+    console.error('ownerChangeCabins failed', e)
+  }
+
+  revalidatePath('/owner/' + secret)
+  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+}
 
 function secretOk(secret: string | null): boolean {
   const env = process.env.OWNER_DASHBOARD_SECRET

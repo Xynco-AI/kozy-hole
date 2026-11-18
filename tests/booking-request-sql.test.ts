@@ -132,6 +132,83 @@ describe('create_booking_request', () => {
     expect(await count('waivers')).toBe(1)
   })
 
+  describe('update_booking_cabins (owner changes cabins on a pending request)', () => {
+    let cabinC: string
+    beforeEach(async () => {
+      const { rows } = await db.query<{ id: string }>(
+        `insert into cabins (slug, name, sort_order) values ('c','C',3) returning id`)
+      cabinC = rows[0].id
+    })
+
+    async function change(bookingId: string, cabinIds: string[], subtotal = 400): Promise<RpcResult> {
+      const { rows } = await db.query<{ r: RpcResult }>(
+        `select update_booking_cabins(
+           p_booking_id => $1::uuid, p_cabin_ids => $2::uuid[],
+           p_nightly_subtotal => $3, p_gst => $3 * 0.05, p_total => $3 * 1.05,
+           p_deposit_amount => $3 * 0.525, p_card_charge => $3 * 0.54075
+         ) as r`, [bookingId, cabinIds, subtotal])
+      return rows[0].r
+    }
+
+    async function cabinsOf(id: string): Promise<string[]> {
+      const { rows } = await db.query<{ cabin_id: string }>(
+        `select cabin_id from booking_cabins where booking_id = $1 order by cabin_id`, [id])
+      return rows.map(r => r.cabin_id)
+    }
+
+    it('swaps the cabins and stores the new price', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA, cabinB, cabinC])
+      expect(await change(b.booking_id!, [cabinB], 900)).toEqual({ ok: true })
+      expect(await cabinsOf(b.booking_id!)).toEqual([cabinB])
+      const { rows } = await db.query<{ total: string; nightly_subtotal: string }>(
+        `select total, nightly_subtotal from bookings where id = $1`, [b.booking_id])
+      expect(rows[0]).toEqual({ total: '945.00', nightly_subtotal: '900.00' })
+    })
+
+    it('does not count the booking against itself (keeping one of its own cabins)', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA, cabinB])
+      expect((await change(b.booking_id!, [cabinA])).ok).toBe(true)
+    })
+
+    it('refuses a cabin another active booking holds, and changes nothing', async () => {
+      await request('2027-01-15', '2027-01-17', [cabinC])
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect(await change(b.booking_id!, [cabinC]))
+        .toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinC })
+      expect(await cabinsOf(b.booking_id!)).toEqual([cabinA])
+    })
+
+    it('refuses a cabin with owner-blocked dates', async () => {
+      await db.query(`insert into blocked_dates (cabin_id, start_date, end_date) values ($1, '2027-01-16', '2027-01-16')`, [cabinC])
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect((await change(b.booking_id!, [cabinC])).ok).toBe(false)
+    })
+
+    it('only works on requests that have not been approved yet', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA, cabinB])
+      await db.query(`update bookings set status = 'APPROVED' where id = $1`, [b.booking_id])
+      expect(await change(b.booking_id!, [cabinA])).toEqual({ ok: false, error: 'NOT_PENDING' })
+      expect(await cabinsOf(b.booking_id!)).toHaveLength(2)
+    })
+
+    it('rejects an empty cabin list', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect(await change(b.booking_id!, [])).toEqual({ ok: false, error: 'NO_CABINS' })
+    })
+
+    it('cannot be called with the public anon key', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      await db.exec(`set role anon`)
+      await expect(change(b.booking_id!, [cabinB])).rejects.toThrow(/permission denied/)
+    })
+  })
+
+  it('adds a payment_reminder_sent_at column for the unpaid-deposit reminder', async () => {
+    const { rows } = await db.query(
+      `select 1 from information_schema.columns where table_name = 'bookings' and column_name = 'payment_reminder_sent_at'`)
+    expect(rows).toHaveLength(1)
+  })
+
   it('cannot be called with the public anon key', async () => {
     await db.exec(`set role anon`)
     await expect(request('2027-01-15', '2027-01-17', [cabinA])).rejects.toThrow(/permission denied/)

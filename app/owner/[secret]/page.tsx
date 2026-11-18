@@ -12,8 +12,19 @@ import {
   markCompleted,
   approveReview,
   blockDates,
+  ownerChangeCabins,
 } from './actions'
 import CancelForm from './CancelForm'
+
+type BookedCabin = { cabin_id: string; cabins: { name: string; sort_order: number } | null }
+
+/** A booking's cabins in display order, from the booking_cabins join. */
+function bookedCabins(b: { booking_cabins?: BookedCabin[] }): { id: string; name: string }[] {
+  return (b.booking_cabins ?? [])
+    .filter((bc) => bc.cabins)
+    .sort((x, y) => x.cabins!.sort_order - y.cabins!.sort_order)
+    .map((bc) => ({ id: bc.cabin_id, name: bc.cabins!.name }))
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -70,12 +81,23 @@ function EmptyState({ message }: { message: string }) {
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
+const NOTICES: Record<string, { ok: boolean; text: string }> = {
+  'cabins-updated': { ok: true, text: 'Cabins updated and the price recalculated. Approve it when ready.' },
+  cabin_unavailable: { ok: false, text: 'That cabin is already booked or blocked for those dates. Nothing was changed.' },
+  not_pending: { ok: false, text: 'Only requests that have not been approved yet can be changed.' },
+  no_cabins: { ok: false, text: 'Pick at least one cabin.' },
+  error: { ok: false, text: 'Something went wrong. Nothing was changed. Please try again.' },
+}
+
 export default async function OwnerDashboard({
   params,
+  searchParams,
 }: {
   params: Promise<{ secret: string }>
+  searchParams: Promise<{ notice?: string }>
 }) {
   const { secret } = await params
+  const notice = NOTICES[(await searchParams).notice ?? '']
 
   // Auth gate — wrong secret → 404
   if (!process.env.OWNER_DASHBOARD_SECRET || !safeEqual(secret, process.env.OWNER_DASHBOARD_SECRET)) {
@@ -103,7 +125,7 @@ export default async function OwnerDashboard({
     const [p, a, u, r, bl, c] = await Promise.all([
       db
         .from('bookings')
-        .select('*')
+        .select('*, booking_cabins(cabin_id, cabins(name, sort_order))')
         .eq('status', 'REQUESTED')
         .order('created_at', { ascending: true }),
       db
@@ -129,7 +151,7 @@ export default async function OwnerDashboard({
       db
         .from('cabins')
         .select('id, name')
-        .order('name', { ascending: true }),
+        .order('sort_order', { ascending: true }),
     ])
     pending = p.data ?? []
     awaitingDeposit = a.data ?? []
@@ -161,6 +183,17 @@ export default async function OwnerDashboard({
       </header>
 
       <Container className="py-10 sm:py-14">
+        {notice && (
+          <p
+            role="status"
+            className={[
+              'mb-8 rounded-xl border px-5 py-4 text-sm',
+              notice.ok ? 'border-success/40 bg-success/10 text-ink' : 'border-danger/40 bg-danger/10 text-ink',
+            ].join(' ')}
+          >
+            {notice.text}
+          </p>
+        )}
         <div className="flex flex-col gap-14">
 
           {/* ── 1. Pending requests ────────────────────────────────────────── */}
@@ -176,6 +209,7 @@ export default async function OwnerDashboard({
                     <div className="mb-3 divide-y divide-hairline rounded-lg border border-hairline bg-canvas/50 px-3">
                       <DetailRow label="Email" value={<a href={`mailto:${b.email}`} className="text-ice underline-offset-2 hover:underline">{b.email}</a>} />
                       <DetailRow label="Phone" value={<a href={`tel:${b.phone}`} className="text-ice underline-offset-2 hover:underline">{b.phone}</a>} />
+                      <DetailRow label="Cabins" value={bookedCabins(b).map((c) => c.name).join(', ') || '—'} />
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Party" value={`${b.party_size}${b.has_pet ? ' + pet' : ''}`} />
@@ -204,6 +238,29 @@ export default async function OwnerDashboard({
                         </Button>
                       </form>
                     </div>
+                    <details className="mt-3 text-sm">
+                      <summary className="cursor-pointer text-muted hover:text-ink">Change cabins</summary>
+                      <form action={ownerChangeCabins} className="mt-3 flex flex-col gap-2">
+                        <input type="hidden" name="bookingId" value={b.id} />
+                        <input type="hidden" name="secret" value={secret} />
+                        {cabins.map((c) => (
+                          <label key={c.id} className="flex items-center gap-2 text-ink">
+                            <input
+                              type="checkbox"
+                              name="cabinIds"
+                              value={c.id}
+                              defaultChecked={bookedCabins(b).some((bc) => bc.id === c.id)}
+                              className="h-4 w-4 accent-[var(--color-ice)]"
+                            />
+                            {c.name}
+                          </label>
+                        ))}
+                        <p className="text-xs text-muted">The price is recalculated for the new number of cabins.</p>
+                        <Button type="submit" variant="ghost" size="md" className="self-start">
+                          Save cabins
+                        </Button>
+                      </form>
+                    </details>
                   </Card>
                 ))}
               </div>

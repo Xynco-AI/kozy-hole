@@ -31,7 +31,50 @@ const all = (): t.Email[] => [
   t.ownerConfirmed(booking),
   t.damageDepositRequest(booking, { depositUrl: 'https://x/dd' }),
   t.cancellation(booking),
+  t.ownerPendingReminder([booking], { dashboardUrl: 'https://x/owner' }),
+  t.guestPaymentReminder(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
+  t.guestHoldExpired(booking, { bookUrl: 'https://x/book' }),
 ]
+
+describe('ownerPendingReminder', () => {
+  const two = [booking, { ...booking, id: 'b2', guest_name: 'Second Guest', cabins: ['Cabin Two'] }]
+
+  it('counts and lists every waiting request', () => {
+    const e = t.ownerPendingReminder(two, { dashboardUrl: 'https://x/owner' })
+    expect(e.subject).toContain('2 booking requests')
+    expect(e.html).toContain('Test Guest')
+    expect(e.html).toContain('Second Guest')
+    expect(e.html).toContain('href="https://x/owner"')
+  })
+
+  it('uses the singular for one request', () => {
+    expect(t.ownerPendingReminder([booking], { dashboardUrl: 'd' }).subject).toContain('1 booking request ')
+  })
+})
+
+describe('guestPaymentReminder', () => {
+  const e = t.guestPaymentReminder(booking, {
+    payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z'),
+  })
+
+  it('says when the hold ends, in Alberta time', () => {
+    expect(e.html).toMatch(/Mon, Jan 11.*1:00\s?p\.?m\.?/i)
+  })
+
+  it('gives both ways to pay', () => {
+    expect(e.html).toContain('href="https://x/p"')
+    expect(e.html).toContain('pay@example.com')
+    expect(e.html).toContain('$367.50')
+  })
+})
+
+describe('guestHoldExpired', () => {
+  it('explains the dates were released and how to rebook', () => {
+    const e = t.guestHoldExpired(booking, { bookUrl: 'https://x/book' })
+    expect(e.html).toMatch(/released/i)
+    expect(e.html).toContain('href="https://x/book"')
+  })
+})
 
 describe('all emails', () => {
   it('show money with cents and never as "$367.5"', () => {

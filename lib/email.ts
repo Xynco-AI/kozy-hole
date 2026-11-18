@@ -60,6 +60,26 @@ export async function sendDamageDepositRequest(bookingId: string) {
     'sendDamageDepositRequest', bookingId)
 }
 
+export async function sendOwnerPendingReminder(bookingIds: string[]) {
+  if (bookingIds.length === 0) return
+  const bookings = await Promise.all(bookingIds.map(getBooking))
+  await send(process.env.OWNER_EMAIL!, templates.ownerPendingReminder(bookings, {
+    dashboardUrl: `${site}/owner/${process.env.OWNER_DASHBOARD_SECRET}`,
+  }), 'sendOwnerPendingReminder', bookingIds.join(','))
+}
+
+export async function sendGuestPaymentReminder(bookingId: string, holdEndsAt: Date) {
+  const b = await getBooking(bookingId)
+  await send(b.email, templates.guestPaymentReminder(b, {
+    payUrl: `${site}/api/bookings/${b.id}/pay`, etransferEmail: etransferEmail(), holdEndsAt,
+  }), 'sendGuestPaymentReminder', bookingId)
+}
+
+export async function sendGuestHoldExpired(bookingId: string) {
+  const b = await getBooking(bookingId)
+  await send(b.email, templates.guestHoldExpired(b, { bookUrl: `${site}/book` }), 'sendGuestHoldExpired', bookingId)
+}
+
 export async function sendCancellation(bookingId: string) {
   const b = await getBooking(bookingId)
   await send(b.email, templates.cancellation(b), 'sendCancellation', bookingId)

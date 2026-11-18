@@ -13,7 +13,9 @@ The site is built and committed. These are the go-live steps, in order. Everythi
   3. `supabase/migrations/0003_cancelled_status.sql`  ← adds CANCELLED booking status (must run outside a transaction)
   4. `supabase/migrations/0004_damage_deposit.sql`  ← damage deposit pre-auth columns
   5. `supabase/migrations/0005_create_booking_request.sql`  ← atomic booking request (prevents double-booking). Must exist before deploying code that calls it, or every booking request fails.
-  6. `supabase/seed.sql`  ← seeds the 3 cabins (rename them once Rob picks names)
+  6. `supabase/migrations/0006_blocked_dates_inclusive_end.sql`  ← owner-blocked end date is inclusive
+  7. `supabase/migrations/0007_owner_tools.sql`  ← change-cabins function + payment reminder column. Must run before deploying the code that uses it.
+  8. `supabase/seed.sql`  ← seeds the 3 cabins (rename them once Rob picks names)
 - From Project Settings → API, copy: **Project URL**, **anon public key**, **service_role key**.
 
 ## 3. Stripe (deposit payments)

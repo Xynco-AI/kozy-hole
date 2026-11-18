@@ -67,6 +67,39 @@ describe('getDepositPayUrl', () => {
     expect(deps.retrieveSession).not.toHaveBeenCalled()
   })
 
+  describe('closing the card page when the 48h hold ends', () => {
+    const NOW = new Date('2027-01-10T12:00:00Z')
+    const approvedHoursAgo = (h: number) => ({
+      ...approved, stripe_session_id: null, approved_at: new Date(NOW.getTime() - h * 3600e3).toISOString(),
+    })
+
+    it('makes the payment page expire when the hold ends', async () => {
+      const deps = { ...payDeps(), now: () => NOW }
+      await getDepositPayUrl(approvedHoursAgo(40), deps) // 8h of hold left
+      expect(deps.createSession).toHaveBeenCalledWith(expect.objectContaining({
+        expiresAt: Math.floor(NOW.getTime() / 1000) + 8 * 3600,
+      }))
+    })
+
+    it('never asks Stripe for more than its 24h maximum', async () => {
+      const deps = { ...payDeps(), now: () => NOW }
+      await getDepositPayUrl(approvedHoursAgo(1), deps) // 47h of hold left
+      const { expiresAt } = (deps.createSession as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(expiresAt).toBeLessThanOrEqual(Math.floor(NOW.getTime() / 1000) + 24 * 3600)
+    })
+
+    it('offers no card payment once less than 30 minutes of hold remain', async () => {
+      const deps = { ...payDeps(), now: () => NOW }
+      expect(await getDepositPayUrl(approvedHoursAgo(47.75), deps)).toBeNull()
+      expect(deps.createSession).not.toHaveBeenCalled()
+    })
+
+    it('does not reuse an open session after the hold has ended', async () => {
+      const deps = { ...payDeps(), now: () => NOW }
+      expect(await getDepositPayUrl({ ...approvedHoursAgo(50), stripe_session_id: 'cs_old' }, deps)).toBeNull()
+    })
+  })
+
   it('creates a fresh session when the old one cannot be retrieved', async () => {
     const deps = payDeps({
       retrieveSession: vi.fn(async () => { throw new Error('No such checkout.session') }),
