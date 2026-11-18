@@ -100,6 +100,29 @@ describe('create_booking_request', () => {
       .toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinA })
   })
 
+  describe('owner blocks include the end date (block Jan 10-20 = first check-in Jan 21)', () => {
+    beforeEach(async () => {
+      await db.query(`insert into blocked_dates (cabin_id, start_date, end_date) values ($1, '2027-01-10', '2027-01-20')`, [cabinA])
+    })
+
+    it('rejects a stay starting on the last blocked day', async () => {
+      expect((await request('2027-01-20', '2027-01-22', [cabinA])).ok).toBe(false)
+    })
+
+    it('allows a stay starting the day after the block ends', async () => {
+      expect((await request('2027-01-21', '2027-01-23', [cabinA])).ok).toBe(true)
+    })
+
+    it('allows a stay that checks out on the first blocked day', async () => {
+      expect((await request('2027-01-08', '2027-01-10', [cabinA])).ok).toBe(true)
+    })
+
+    it('rejects a one-day block on that day', async () => {
+      await db.query(`insert into blocked_dates (cabin_id, start_date, end_date) values ($1, '2027-02-05', '2027-02-05')`, [cabinA])
+      expect((await request('2027-02-05', '2027-02-06', [cabinA])).ok).toBe(false)
+    })
+  })
+
   it('inserts nothing when any one of several cabins is taken', async () => {
     await request('2027-01-15', '2027-01-17', [cabinB])
     const r = await request('2027-01-15', '2027-01-17', [cabinA, cabinB])

@@ -342,7 +342,7 @@ export default async function OwnerDashboard({
                     </label>
                     <label className="flex flex-col gap-1.5">
                       <span className="text-[0.78rem] font-semibold uppercase tracking-wide text-muted">
-                        End date
+                        Last blocked day
                       </span>
                       <input
                         type="date"
