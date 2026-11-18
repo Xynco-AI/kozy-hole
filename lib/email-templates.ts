@@ -61,9 +61,17 @@ function stayDetails(b: EmailBooking): string {
   ])
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+/** "2 nights", or "2 nights × 3 cabins" so a multi-cabin subtotal doesn't look like an overcharge. */
+function nightsLabel(b: EmailBooking): string {
+  const n = b.cabins.length
+  return n > 1 ? `${plural(b.nights, 'night')} × ${plural(n, 'cabin')}` : plural(b.nights, 'night')
+}
+
 function priceBreakdown(b: EmailBooking): string {
   return table([
-    [`${b.nights} night${b.nights === 1 ? '' : 's'}`, money(b.nightly_subtotal)],
+    [nightsLabel(b), money(b.nightly_subtotal)],
     ['GST (5%)', money(b.gst)],
     ['<b>Total</b>', `<b>${money(b.total)}</b>`],
     ['Deposit (50%)', `${money(b.deposit_amount)} by e-transfer, or ${money(cardCharge(b))} by card (3% fee)`],
@@ -87,7 +95,7 @@ const DAMAGE_DEPOSIT_NOTE =
 
 export function ownerRequestAlert(b: EmailBooking, l: { approveUrl: string; declineUrl: string }): Email {
   return {
-    subject: `New booking request - ${b.guest_name} (${dates(b)})`,
+    subject: `New booking request - ${b.guest_name} (${dates(b)}${b.cabins.length > 1 ? `, ${b.cabins.length} cabins` : ''})`,
     html: `
       <h2>New booking request</h2>
       <p><b>${e(b.guest_name)}</b> · ${e(b.email)} · ${e(b.phone)}</p>

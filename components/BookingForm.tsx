@@ -243,6 +243,12 @@ export default function BookingForm({ cabins, previewMode }: Props) {
         {selectedCabinIds.length === 0 && (
           <p className="text-sm text-faint">No cabin selected yet.</p>
         )}
+        {selectedCabinIds.length > 1 && (
+          <p className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-ink">
+            You&apos;ve selected <strong>{selectedCabinIds.length} cabins</strong>, and pricing is
+            per cabin. Only need one? Tap a cabin again to deselect it.
+          </p>
+        )}
       </section>
 
       {/* ── 2. Dates ──────────────────────────────────────────────────────── */}
@@ -301,7 +307,12 @@ export default function BookingForm({ cabins, previewMode }: Props) {
 
       {/* ── 3. Live quote ─────────────────────────────────────────────────── */}
       {liveQuote && (
-        <QuotePanel quote={liveQuote} addons={selectedAddons} hasPet={hasPet} />
+        <QuotePanel
+          quote={liveQuote}
+          addons={selectedAddons}
+          hasPet={hasPet}
+          cabinCount={selectedCabinIds.length}
+        />
       )}
 
       {/* ── 4. Guest details ──────────────────────────────────────────────── */}

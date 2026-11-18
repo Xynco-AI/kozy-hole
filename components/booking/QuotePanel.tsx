@@ -8,6 +8,7 @@ type Props = {
   quote: Quote;
   addons: string[];
   hasPet: boolean;
+  cabinCount: number;
 };
 
 function Row({
@@ -37,7 +38,7 @@ function Row({
   );
 }
 
-export default function QuotePanel({ quote: q, addons, hasPet }: Props) {
+export default function QuotePanel({ quote: q, addons, hasPet, cabinCount }: Props) {
   const extras = arrivalItems({ addons, hasPet });
 
   return (
@@ -47,7 +48,12 @@ export default function QuotePanel({ quote: q, addons, hasPet }: Props) {
       </p>
 
       <div className="flex flex-col gap-2.5">
-        <Row label={`${q.nights} night${q.nights !== 1 ? "s" : ""}`} value={money(q.nightlySubtotal)} />
+        <Row
+          label={`${q.nights} night${q.nights !== 1 ? "s" : ""}${
+            cabinCount > 1 ? ` × ${cabinCount} cabins` : ""
+          }`}
+          value={money(q.nightlySubtotal)}
+        />
         <Row label="GST (5%)" value={money(q.gst)} muted />
 
         <div className="my-1 h-px bg-hairline" />

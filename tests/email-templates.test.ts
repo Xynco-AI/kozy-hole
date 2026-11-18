@@ -57,6 +57,26 @@ describe('all emails', () => {
   })
 })
 
+describe('price breakdown with several cabins', () => {
+  // Real case: a 2-night, 3-cabin request read as "2 nights $2,700" and looked like a 3x overcharge.
+  const three = { ...booking, cabins: ['Cabin One', 'Cabin Two', 'Cabin Three'], nightly_subtotal: 2700 }
+
+  it('shows nights x cabins so the subtotal makes sense', () => {
+    for (const e of [
+      t.ownerRequestAlert(three, { approveUrl: 'a', declineUrl: 'd' }),
+      t.guestRequestReceived(three, { statusUrl: 's' }),
+    ]) expect(e.html).toContain('2 nights × 3 cabins')
+  })
+
+  it('puts the cabin count in the owner alert subject', () => {
+    expect(t.ownerRequestAlert(three, { approveUrl: 'a', declineUrl: 'd' }).subject).toContain('3 cabins')
+  })
+
+  it('keeps the simple label for one cabin', () => {
+    expect(t.guestRequestReceived(booking, { statusUrl: 's' }).html).not.toContain('× 1 cabin')
+  })
+})
+
 describe('ownerRequestAlert', () => {
   it('tells the owner the cabin, pet and add-ons to prepare', () => {
     const { html } = t.ownerRequestAlert(booking, { approveUrl: 'a', declineUrl: 'd' })
