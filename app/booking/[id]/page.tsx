@@ -5,6 +5,7 @@ import Container from "@/components/Container";
 import Button from "@/components/Button";
 import { supabaseAdmin } from "@/lib/supabase";
 import { depositCardCents } from "@/lib/deposit-payment";
+import { etransferEmail } from "@/lib/settings";
 import { formatDate, parseLocalDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -232,12 +233,7 @@ export default async function BookingPage({
                       {money(depositAmount)}
                     </span>{" "}
                     by Interac e-transfer to{" "}
-                    <a
-                      href="mailto:kozyhole@gmail.com"
-                      className="text-ice underline-offset-2 hover:underline"
-                    >
-                      kozyhole@gmail.com
-                    </a>{" "}
+                    <span className="font-semibold text-ink">{etransferEmail()}</span>{" "}
                     (no additional fee). Include your name and dates in the note. We&apos;ll
                     confirm once it lands.
                   </p>
@@ -305,9 +301,16 @@ export default async function BookingPage({
               {/* Due on arrival */}
               <p className="mt-8 leading-relaxed text-muted">
                 <span className="font-semibold text-ink">Due on arrival:</span>{" "}
-                the remaining balance, a $500 damage deposit per cabin
-                {b.has_pet ? ", and the $50 pet fee" : ""} (cash or
+                the remaining balance
+                {b.has_pet ? ", the $50 pet fee," : ""}
+                {(b.addons?.length ?? 0) > 0 ? " and any add-ons" : ""} (cash or
                 e-transfer).
+              </p>
+              <p className="mt-3 leading-relaxed text-muted">
+                <span className="font-semibold text-ink">Damage deposit:</span>{" "}
+                3 days before your stay we&apos;ll email you a link to authorize a
+                $500 per cabin hold on your card. It&apos;s a hold, not a charge,
+                and it&apos;s released after checkout.
               </p>
 
               {/* Meeting note */}

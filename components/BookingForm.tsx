@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import CabinPicker, { type CabinOption } from "@/components/booking/CabinPicker";
 import QuotePanel from "@/components/booking/QuotePanel";
+import { ADDONS as ADDON_MENU } from "@/lib/addons";
 import WaiverBox from "@/components/booking/WaiverBox";
 import { quote, validateStay } from "@/lib/pricing";
 import { parseLocalDate } from "@/lib/dates";
@@ -48,13 +49,7 @@ function getSeasonWindow(): { min: string; max: string } {
 // Add-on options
 // ---------------------------------------------------------------------------
 
-const ADDONS = [
-  "Bait & tackle pack",
-  "Rod & gear rental",
-  "Forward-facing sonar (Livescope) rental",
-  "Shuttle to the cabin (+$60 round trip, conditions permitting)",
-  "Guided trip",
-];
+const ADDONS = ADDON_MENU.map((a) => a.label);
 
 // ---------------------------------------------------------------------------
 // Error message mapping
@@ -305,7 +300,9 @@ export default function BookingForm({ cabins, previewMode }: Props) {
       </section>
 
       {/* ── 3. Live quote ─────────────────────────────────────────────────── */}
-      {liveQuote && <QuotePanel quote={liveQuote} />}
+      {liveQuote && (
+        <QuotePanel quote={liveQuote} addons={selectedAddons} hasPet={hasPet} />
+      )}
 
       {/* ── 4. Guest details ──────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">

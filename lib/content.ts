@@ -265,7 +265,7 @@ export const policies: { label: string; value: string }[] = [
   {
     label: "On arrival",
     value:
-      "Remaining balance, a $500 damage deposit per cabin, and a $50/stay pet fee if applicable.",
+      "Remaining balance, plus the $50/stay pet fee and any add-ons. The $500/cabin damage deposit is a card hold you authorize online 3 days before your stay.",
   },
   {
     label: "Check-in / check-out",

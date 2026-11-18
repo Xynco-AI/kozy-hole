@@ -5,7 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { quote, validateStay } from '@/lib/pricing'
 import { generateToken } from '@/lib/tokens'
 import { parseLocalDate } from '@/lib/dates'
-import { sendOwnerRequestAlert } from '@/lib/email'
+import { sendOwnerRequestAlert, sendGuestRequestReceived } from '@/lib/email'
+import { ADDONS } from '@/lib/addons'
 
 const schema = z.object({
   guestName: z.string().min(2),
@@ -16,7 +17,8 @@ const schema = z.object({
   checkIn: z.string(),  // 'YYYY-MM-DD'
   checkOut: z.string(),
   cabinIds: z.array(z.string().uuid()).min(1).max(3),
-  addons: z.array(z.string()),
+  // Only labels from the add-on menu (also keeps guest-typed text out of emails).
+  addons: z.array(z.enum(ADDONS.map(a => a.label) as [string, ...string[]])),
   waiverAgreed: z.literal(true),
   partyMembers: z.array(z.string()),
 })
@@ -60,5 +62,6 @@ export async function createBookingRequest(input: unknown) {
   if (!result.ok) return { ok: false, error: result.error ?? 'DB_ERROR', cabinId: result.cabin_id }
 
   await sendOwnerRequestAlert(result.booking_id)
+  await sendGuestRequestReceived(result.booking_id)
   return { ok: true, bookingId: result.booking_id as string }
 }

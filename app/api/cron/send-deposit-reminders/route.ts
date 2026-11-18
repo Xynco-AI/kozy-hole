@@ -29,11 +29,7 @@ export async function GET(req: NextRequest) {
 
   let sent = 0
   for (const booking of bookings) {
-    const { count } = await db
-      .from('booking_cabins')
-      .select('*', { count: 'exact', head: true })
-      .eq('booking_id', booking.id)
-    await sendDamageDepositRequest(booking.id, count ?? 1)
+    await sendDamageDepositRequest(booking.id)
     sent++
   }
 

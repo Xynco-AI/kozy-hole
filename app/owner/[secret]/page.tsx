@@ -179,6 +179,7 @@ export default async function OwnerDashboard({
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Party" value={`${b.party_size}${b.has_pet ? ' + pet' : ''}`} />
+                      <DetailRow label="Add-ons" value={b.addons?.length ? b.addons.join(', ') : 'None'} />
                       <DetailRow label="Total" value={money(b.total)} />
                       <DetailRow label="Deposit" value={money(b.deposit_amount)} />
                     </div>
@@ -258,6 +259,7 @@ export default async function OwnerDashboard({
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Party" value={`${b.party_size}${b.has_pet ? ' + pet' : ''}`} />
+                      <DetailRow label="Add-ons" value={b.addons?.length ? b.addons.join(', ') : 'None'} />
                       <DetailRow label="Payment" value={b.payment_method ?? '—'} />
                     </div>
                     <form action={markCompleted}>
