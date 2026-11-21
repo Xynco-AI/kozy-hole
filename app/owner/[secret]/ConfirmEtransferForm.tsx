@@ -2,6 +2,7 @@
 
 import Button from '@/components/Button'
 import { confirmEtransfer } from './actions'
+import { etransferConfirmMessage } from '@/lib/owner-rules'
 
 /** "Mark e-transfer received", with an "Are you sure?" step: it confirms the booking and emails the guest. */
 export default function ConfirmEtransferForm({
@@ -9,21 +10,19 @@ export default function ConfirmEtransferForm({
   secret,
   guestName,
   amount,
+  hasWaiver,
 }: {
   bookingId: string
   secret: string
   guestName: string
   amount: string
+  hasWaiver: boolean
 }) {
   return (
     <form
       action={confirmEtransfer}
       onSubmit={(e) => {
-        const ok = confirm(
-          `Mark ${guestName}'s ${amount} deposit as received?\n\n` +
-            `This confirms the booking and emails ${guestName} a confirmation. ` +
-            `Only do this once the e-transfer is in your bank.`,
-        )
+        const ok = confirm(etransferConfirmMessage({ guestName, amount, hasWaiver }))
         if (!ok) e.preventDefault()
       }}
     >

@@ -36,6 +36,7 @@ const all = (): t.Email[] => [
   t.guestHoldExpired(booking, { bookUrl: 'https://x/book' }),
   t.guestBookingUpdated(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
   t.guestConfirmationMistake(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
+  t.guestPhoneBooking(booking, { waiverUrl: 'https://x/w', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
 ]
 
 describe('guestBookingUpdated', () => {
@@ -214,5 +215,22 @@ describe('guestApproved', () => {
     const { html } = t.guestApproved(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com' })
     expect(html).toContain('pay@example.com')
     expect(html).toContain('href="https://x/p"')
+  })
+})
+
+describe('guestPhoneBooking', () => {
+  const e = t.guestPhoneBooking(booking, { waiverUrl: 'https://x/w', holdEndsAt: new Date('2027-01-11T20:00:00Z') })
+
+  it('asks the guest to sign the waiver, then pay', () => {
+    expect(e.subject).toMatch(/waiver/i)
+    expect(e.html).toContain('href="https://x/w"')
+    expect(e.html).toMatch(/sign.*waiver.*pay/i)
+  })
+
+  it('shows the stay and full price, and the hold deadline', () => {
+    expect(e.html).toContain('Cabin One')
+    expect(e.html).toContain('$735.00')
+    expect(e.html).toContain('$367.50')
+    expect(e.html).toMatch(/Mon, Jan 11/)
   })
 })

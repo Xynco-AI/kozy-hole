@@ -275,6 +275,59 @@ describe('create_booking_request', () => {
     })
   })
 
+  describe('create_phone_booking (owner books a guest over the phone)', () => {
+    async function phone(checkIn: string, checkOut: string, cabinIds: string[]): Promise<RpcResult> {
+      const { rows } = await db.query<{ r: RpcResult }>(
+        `select create_phone_booking(
+           p_guest_name => 'Phone Guest', p_email => 'p@example.com', p_phone => '7805551111',
+           p_party_size => 2, p_has_pet => false,
+           p_check_in => $1::date, p_check_out => $2::date, p_nights => 2,
+           p_nightly_subtotal => 700, p_gst => 35, p_total => 735,
+           p_deposit_amount => 367.5, p_card_charge => 378.53,
+           p_approval_token => 'tok', p_addons => '{}'::text[], p_cabin_ids => $3::uuid[]
+         ) as r`, [checkIn, checkOut, cabinIds])
+      return rows[0].r
+    }
+
+    it('creates the booking already approved, marked as a phone booking, with the hold starting now', async () => {
+      const r = await phone('2027-01-15', '2027-01-17', [cabinA])
+      expect(r.ok).toBe(true)
+      const { rows } = await db.query<{ status: string; source: string; held_for: number }>(
+        `select status, source, extract(epoch from now() - approved_at)::int as held_for from bookings where id = $1`,
+        [r.booking_id])
+      expect(rows[0]).toEqual({ status: 'APPROVED', source: 'phone', held_for: 0 })
+      expect(await count('booking_cabins')).toBe(1)
+    })
+
+    it('does NOT create a waiver: the guest must sign it themselves', async () => {
+      await phone('2027-01-15', '2027-01-17', [cabinA])
+      expect(await count('waivers')).toBe(0)
+    })
+
+    it('respects the same availability rules as online bookings', async () => {
+      await request('2027-01-15', '2027-01-17', [cabinA])
+      expect(await phone('2027-01-16', '2027-01-18', [cabinA]))
+        .toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinA })
+      expect(await count('bookings')).toBe(1)
+    })
+
+    it('blocks later online requests for the same cabin and dates', async () => {
+      await phone('2027-01-15', '2027-01-17', [cabinA])
+      expect((await request('2027-01-15', '2027-01-17', [cabinA])).ok).toBe(false)
+    })
+
+    it('marks online bookings as online', async () => {
+      const r = await request('2027-01-15', '2027-01-17', [cabinA])
+      const { rows } = await db.query<{ source: string }>(`select source from bookings where id = $1`, [r.booking_id])
+      expect(rows[0].source).toBe('online')
+    })
+
+    it('cannot be called with the public anon key', async () => {
+      await db.exec(`set role anon`)
+      await expect(phone('2027-01-15', '2027-01-17', [cabinA])).rejects.toThrow(/permission denied/)
+    })
+  })
+
   it('adds a payment_reminder_sent_at column for the unpaid-deposit reminder', async () => {
     const { rows } = await db.query(
       `select 1 from information_schema.columns where table_name = 'bookings' and column_name = 'payment_reminder_sent_at'`)

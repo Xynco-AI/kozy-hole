@@ -12,11 +12,14 @@ import {
   approveReview,
   blockDates,
   ownerEditBooking,
+  ownerCreatePhoneBooking,
+  resendWaiverEmail,
 } from './actions'
 import CancelForm from './CancelForm'
 import ConfirmEtransferForm from './ConfirmEtransferForm'
 import UndoEtransferForm from './UndoEtransferForm'
 import { canUndoEtransfer } from '@/lib/owner-rules'
+import { ADDONS } from '@/lib/addons'
 
 type BookedCabin = { cabin_id: string; cabins: { name: string; sort_order: number } | null }
 
@@ -140,6 +143,66 @@ function EditBookingForm({
   )
 }
 
+function hasWaiver(b: { waivers?: { id: string }[] }): boolean {
+  return (b.waivers?.length ?? 0) > 0
+}
+
+function waiverLabel(b: { waivers?: { id: string }[] }): string {
+  return hasWaiver(b) ? 'Signed ✓' : 'Not signed yet'
+}
+
+/** "New phone booking": Rob enters a booking taken by phone. */
+function PhoneBookingForm({ cabins, secret }: { cabins: { id: string; name: string }[]; secret: string }) {
+  const input =
+    'rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-ice/60'
+  const label = 'flex flex-col gap-1 text-xs text-muted'
+  return (
+    <details className="rounded-[var(--radius-card)] border border-ice/30 bg-surface p-5">
+      <summary className="cursor-pointer font-semibold text-ink">+ New phone booking</summary>
+      <form action={ownerCreatePhoneBooking} className="mt-4 flex flex-col gap-4">
+        <input type="hidden" name="secret" value={secret} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className={label}>Guest name<input name="guestName" required minLength={2} className={input} /></label>
+          <label className={label}>Email (waiver and payment link go here)<input name="email" type="email" required className={input} /></label>
+          <label className={label}>Phone<input name="phone" type="tel" required minLength={7} className={input} /></label>
+          <label className={label}>Party size<input name="partySize" type="number" min={1} max={15} defaultValue={2} required className={input} /></label>
+          <label className={label}>Check-in<input name="checkIn" type="date" required className={input} /></label>
+          <label className={label}>Check-out<input name="checkOut" type="date" required className={input} /></label>
+        </div>
+        <fieldset className="flex flex-col gap-1.5 text-sm">
+          <legend className="mb-1 text-xs text-muted">Cabins</legend>
+          {cabins.map((c) => (
+            <label key={c.id} className="flex items-center gap-2 text-ink">
+              <input type="checkbox" name="cabinIds" value={c.id} className="h-4 w-4 accent-[var(--color-ice)]" />
+              {c.name}
+            </label>
+          ))}
+        </fieldset>
+        <fieldset className="flex flex-col gap-1.5 text-sm">
+          <legend className="mb-1 text-xs text-muted">Extras (paid on arrival)</legend>
+          <label className="flex items-center gap-2 text-ink">
+            <input type="checkbox" name="hasPet" className="h-4 w-4 accent-[var(--color-ice)]" />
+            Bringing a dog ($50)
+          </label>
+          {ADDONS.map((a) => (
+            <label key={a.label} className="flex items-center gap-2 text-ink">
+              <input type="checkbox" name="addons" value={a.label} className="h-4 w-4 accent-[var(--color-ice)]" />
+              {a.label}
+            </label>
+          ))}
+        </fieldset>
+        <p className="text-xs text-muted">
+          The booking is saved as approved, and the guest gets an email to sign the safety waiver and
+          then pay their 50% deposit. Their dates are held for 48 hours.
+        </p>
+        <Button type="submit" variant="primary" size="md" className="self-start">
+          Create booking and email guest
+        </Button>
+      </form>
+    </details>
+  )
+}
+
 const NOTICES: Record<string, { ok: boolean; text: string }> = {
   'booking-updated': { ok: true, text: 'Booking updated and the price recalculated. Approve it when ready.' },
   'booking-updated-emailed': { ok: true, text: 'Booking updated. The guest has been emailed the new dates, price and a fresh payment link (48-hour hold restarted).' },
@@ -153,6 +216,11 @@ const NOTICES: Record<string, { ok: boolean; text: string }> = {
   'undo-done': { ok: true, text: 'Done. The booking is back to awaiting deposit with a fresh 48-hour hold. No email was sent.' },
   'undo-done-emailed': { ok: true, text: 'Done. The booking is back to awaiting deposit with a fresh 48-hour hold, and the guest was emailed a correction.' },
   cannot_undo: { ok: false, text: 'That booking can no longer be undone here (only e-transfer confirmations before the damage deposit is authorized). Nothing was changed.' },
+  'phone-booking-created': { ok: true, text: 'Phone booking created. The guest has been emailed a link to sign the waiver and pay their deposit (48-hour hold started).' },
+  'waiver-resent': { ok: true, text: 'Waiver email sent again.' },
+  waiver_not_needed: { ok: false, text: 'That booking already has a signed waiver (or is no longer awaiting deposit). No email sent.' },
+  missing_details: { ok: false, text: 'Please fill in the name, phone, party size and both dates. Nothing was saved.' },
+  invalid_email: { ok: false, text: "That email address doesn't look right. The waiver and payment link are sent there. Nothing was saved." },
   error: { ok: false, text: 'Something went wrong. Nothing was changed. Please try again.' },
 }
 
@@ -192,17 +260,17 @@ export default async function OwnerDashboard({
     const [p, a, u, r, bl, c] = await Promise.all([
       db
         .from('bookings')
-        .select('*, booking_cabins(cabin_id, cabins(name, sort_order))')
+        .select('*, booking_cabins(cabin_id, cabins(name, sort_order)), waivers(id)')
         .eq('status', 'REQUESTED')
         .order('created_at', { ascending: true }),
       db
         .from('bookings')
-        .select('*, booking_cabins(cabin_id, cabins(name, sort_order))')
+        .select('*, booking_cabins(cabin_id, cabins(name, sort_order)), waivers(id)')
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: true }),
       db
         .from('bookings')
-        .select('*')
+        .select('*, waivers(id)')
         .eq('status', 'CONFIRMED')
         .gte('check_out', today)
         .order('check_in', { ascending: true }),
@@ -262,6 +330,7 @@ export default async function OwnerDashboard({
           </p>
         )}
         <div className="flex flex-col gap-14">
+          <PhoneBookingForm cabins={cabins} secret={secret} />
 
           {/* ── 1. Pending requests ────────────────────────────────────────── */}
           <section>
@@ -280,6 +349,7 @@ export default async function OwnerDashboard({
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Party" value={`${b.party_size}${b.has_pet ? ' + pet' : ''}`} />
+                      <DetailRow label="Waiver" value={waiverLabel(b)} />
                       <DetailRow label="Add-ons" value={b.addons?.length ? b.addons.join(', ') : 'None'} />
                       <DetailRow label="Total" value={money(b.total)} />
                       <DetailRow label="Deposit" value={money(b.deposit_amount)} />
@@ -328,6 +398,7 @@ export default async function OwnerDashboard({
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Cabins" value={bookedCabins(b).map((c) => c.name).join(', ') || '—'} />
+                      <DetailRow label="Waiver" value={waiverLabel(b)} />
                       <DetailRow label="Deposit owed" value={money(b.deposit_amount)} />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -336,7 +407,17 @@ export default async function OwnerDashboard({
                         secret={secret}
                         guestName={b.guest_name}
                         amount={money(b.deposit_amount)}
+                        hasWaiver={hasWaiver(b)}
                       />
+                      {!hasWaiver(b) && (
+                        <form action={resendWaiverEmail}>
+                          <input type="hidden" name="bookingId" value={b.id} />
+                          <input type="hidden" name="secret" value={secret} />
+                          <Button type="submit" variant="ghost" size="md">
+                            Resend waiver email
+                          </Button>
+                        </form>
+                      )}
                       <CancelForm bookingId={b.id} secret={secret} />
                     </div>
                     <EditBookingForm booking={b} cabins={cabins} secret={secret} />
@@ -362,6 +443,7 @@ export default async function OwnerDashboard({
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
                       <DetailRow label="Party" value={`${b.party_size}${b.has_pet ? ' + pet' : ''}`} />
+                      <DetailRow label="Waiver" value={waiverLabel(b)} />
                       <DetailRow label="Add-ons" value={b.addons?.length ? b.addons.join(', ') : 'None'} />
                       <DetailRow label="Payment" value={b.payment_method ?? '—'} />
                     </div>

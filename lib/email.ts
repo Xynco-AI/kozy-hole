@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import { etransferEmail } from './settings'
+import { holdEndsAt } from './daily-jobs'
 import * as templates from './email-templates'
 import type { Email, EmailBooking } from './email-templates'
 
@@ -87,6 +88,15 @@ export async function sendGuestConfirmationMistake(bookingId: string, holdEndsAt
   await send(b.email, templates.guestConfirmationMistake(b, {
     payUrl: `${site}/api/bookings/${b.id}/pay`, etransferEmail: etransferEmail(), holdEndsAt,
   }), 'sendGuestConfirmationMistake', bookingId)
+}
+
+/** Phone booking: links to the waiver page, which leads on to payment. */
+export async function sendGuestPhoneBooking(bookingId: string) {
+  const b = await getBooking(bookingId)
+  const approvedAt = (b as EmailBooking & { approved_at: string }).approved_at
+  await send(b.email, templates.guestPhoneBooking(b, {
+    waiverUrl: `${site}/booking/${b.id}/waiver`, holdEndsAt: holdEndsAt(approvedAt),
+  }), 'sendGuestPhoneBooking', bookingId)
 }
 
 export async function sendGuestHoldExpired(bookingId: string) {

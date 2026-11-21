@@ -16,7 +16,8 @@ The site is built and committed. These are the go-live steps, in order. Everythi
   6. `supabase/migrations/0006_blocked_dates_inclusive_end.sql`  ← owner-blocked end date is inclusive
   7. `supabase/migrations/0007_owner_tools.sql`  ← change-cabins function + payment reminder column. Must run before deploying the code that uses it.
   8. `supabase/migrations/0008_update_booking.sql`  ← owner can change dates/cabins of unpaid bookings. Must run before deploying the code that uses it.
-  9. `supabase/seed.sql`  ← seeds the 3 cabins (rename them once Rob picks names)
+  9. `supabase/migrations/0009_phone_bookings.sql`  ← phone bookings (create_phone_booking + bookings.source). Must run before deploying the code that uses it.
+  10. `supabase/seed.sql`  ← seeds the 3 cabins (rename them once Rob picks names)
 - From Project Settings → API, copy: **Project URL**, **anon public key**, **service_role key**.
 
 ## 3. Stripe (deposit payments)

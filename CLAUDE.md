@@ -39,7 +39,7 @@ Path alias `@/` maps to the project root, in both tsconfig and vitest.
 
 How a booking moves through the system:
 1. `app/book/actions.ts` (`createBookingRequest`, a server action) validates input with Zod and prices the stay with `quote()`. It then calls the Postgres function `create_booking_request` (migration `0005`). That function locks each cabin, checks for overlaps with active bookings and `blocked_dates`, and inserts `bookings`, `booking_cabins` and `waivers` in one transaction. The action then emails the owner. Overlap rules live only in that SQL function, and `tests/booking-request-sql.test.ts` runs every migration in PGlite (an in-process Postgres) to test it.
-2. The owner approves in one of two ways. The emailed link `GET /api/bookings/[id]/approve?token=…` is checked against `approval_token`. The dashboard at `/owner/[secret]` is checked against `OWNER_DASHBOARD_SECRET`. Both call `approveBooking()` in `lib/booking-approval.ts`. That function updates the DB first, then creates the Stripe Checkout session for the 50% deposit, then emails the guest.
+2. The owner approves in one of two ways. The emailed link `GET /api/bookings/[id]/approve?token=…` is checked against `approval_token`. The dashboard at `/owner/[secret]` is checked against `OWNER_DASHBOARD_SECRET`. Both call `approveBooking()` in `lib/booking-approval.ts`, which sets APPROVED and emails the guest a link to `/api/bookings/[id]/pay`. That route creates (or reuses) the Stripe Checkout session on click, and refuses to take payment until the booking has a signed waiver (`canPayDeposit` in `lib/owner-rules.ts`).
 3. `POST /api/stripe/webhook` handles `checkout.session.completed`. When `metadata.type === 'damage_deposit'`, it records the $500/cabin pre-auth hold. Otherwise it flips APPROVED to CONFIRMED and sends the confirmation email.
 4. Vercel crons (`vercel.json`) run once a day (expire-holds at 12:00 UTC = 5 AM Alberta in winter, 6 AM after daylight saving) and require `Authorization: Bearer $CRON_SECRET` (they reject the request if it is not set).
    - `/api/cron/expire-holds` applies the rules in `lib/daily-jobs.ts`. It expires APPROVED bookings 48h after approval and emails the guest. It sends one "pay your deposit" reminder at 24h. It emails the owner a list of REQUESTED bookings older than 24h. It never auto-declines a future request, and only expires REQUESTED bookings whose check-in has already passed.
@@ -48,11 +48,13 @@ How a booking moves through the system:
 
 **Owner can change dates and cabins** on any unpaid booking (REQUESTED or APPROVED) from the dashboard. This calls the Postgres function `update_booking` (migration `0008`), which re-checks availability and stores the re-priced amounts. For an APPROVED booking it clears the Stripe session and restarts the 48h hold; the action then expires the old session in Stripe and emails the guest. `update_booking_cabins` (0007) is superseded.
 
+**Phone bookings:** the dashboard's "New phone booking" form calls `create_phone_booking` (migration `0009`). The booking is created already APPROVED (`source = 'phone'`) with **no waiver row**. The guest is emailed a link to `/booking/[id]/waiver`, signs there, and only then sees the payment options. Online bookings get their waiver from the booking form. Dashboard owner rules (undo e-transfer, waiver gate, phone form parsing) are pure functions in `lib/owner-rules.ts`.
+
 **Email content** lives in `lib/email-templates.ts` as pure, tested functions. `lib/email.ts` only loads the booking and sends. Add-on menu and prices are in `lib/addons.ts`; the stored label must stay stable because bookings store it.
 
 **Auth:** there are no user accounts. Access is controlled by secrets in URLs: a per-booking `approval_token` and the dashboard secret. Compare them with `safeEqual()` from `lib/tokens.ts`, which is timing-safe.
 
-**Email:** all templates live in `lib/email.ts` (Resend, sent from the kozyhole.ca domain). Do not use em dashes in email copy. They were deliberately removed.
+**Email:** sent with Resend from the kozyhole.ca domain. Do not use em dashes in email copy; they were deliberately removed, and a test enforces it.
 
 **Landing page:** `app/page.tsx` composes the components in `components/sections/*`. Marketing copy comes from `lib/content.ts`, which is the single source of truth and needs no database. Cabin names ("Cabin One/Two/Three") are placeholders until the owner picks real ones. When they change, update both `lib/content.ts` and the Supabase `cabins` table. Brand images are in `public/brand/`. The originals are in `../images/`.
 

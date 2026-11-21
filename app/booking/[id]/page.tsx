@@ -63,7 +63,7 @@ export default async function BookingPage({
   let b: Record<string, any> | null = null;
   try {
     const db = supabaseAdmin();
-    const { data } = await db.from("bookings").select("*").eq("id", id).single();
+    const { data } = await db.from("bookings").select("*, waivers(id)").eq("id", id).single();
     b = data;
   } catch {
     b = null;
@@ -149,6 +149,7 @@ export default async function BookingPage({
   // ── APPROVED ──────────────────────────────────────────────────────────────
   if (status === "APPROVED") {
     const depositAmount: number = b.deposit_amount ?? 0;
+    const hasWaiver = (b.waivers?.length ?? 0) > 0;
 
     // The pay route creates (or reuses) a live Stripe Checkout session on click,
     // so the card option works for the whole 48h hold, not just Stripe's 24h.
@@ -178,6 +179,8 @@ export default async function BookingPage({
                 ) to confirm your stay. Choose either option below.
               </p>
 
+              {hasWaiver ? (
+                <>
               {/* Payment options */}
               <div className="mt-10 grid gap-6 sm:grid-cols-2">
                 {/* Card */}
@@ -237,6 +240,22 @@ export default async function BookingPage({
                   </p>
                 </div>
               </div>
+                </>
+              ) : (
+                <div className="mt-10 rounded-xl border border-amber/40 bg-amber/10 p-6">
+                  <p className="mb-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-amber">
+                    Step 1 of 2
+                  </p>
+                  <p className="mb-2 text-base font-semibold text-ink">Sign the safety waiver</p>
+                  <p className="mb-5 text-sm leading-relaxed text-muted">
+                    Before paying your deposit, please read and sign the release of liability for
+                    your group. It takes about a minute.
+                  </p>
+                  <Button href={`/booking/${b.id}/waiver`} variant="primary" size="lg" className="w-full sm:w-auto">
+                    Sign the waiver
+                  </Button>
+                </div>
+              )}
 
               {/* Hold notice */}
               <p className="mt-6 text-center text-xs text-faint">

@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
-import { sendConfirmation, sendCancellation, sendGuestBookingUpdated, sendGuestConfirmationMistake } from '@/lib/email'
-import { canUndoEtransfer } from '@/lib/owner-rules'
+import { sendConfirmation, sendCancellation, sendGuestBookingUpdated, sendGuestConfirmationMistake, sendGuestPhoneBooking } from '@/lib/email'
+import { generateToken } from '@/lib/tokens'
+import { canUndoEtransfer, parsePhoneBooking } from '@/lib/owner-rules'
 import { approveBooking, declineBooking } from '@/lib/booking-approval'
 import { redirect } from 'next/navigation'
 import { quote, validateStay } from '@/lib/pricing'
@@ -124,6 +125,91 @@ export async function undoEtransfer(formData: FormData): Promise<void> {
 
   revalidatePath('/owner/' + secret)
   redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+}
+
+// ─── ownerCreatePhoneBooking ──────────────────────────────────────────────────
+// Rob takes a booking by phone. It's created already approved (48h hold starts now),
+// with no waiver: the guest is emailed a link to sign it, then pay (migration 0009).
+export async function ownerCreatePhoneBooking(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  if (!secretOk(secret)) return
+
+  let notice = 'error'
+  try {
+    const parsed = parsePhoneBooking(formData)
+    if (!parsed.ok) {
+      notice = parsed.error
+    } else {
+      const d = parsed.data
+      const inDate = parseLocalDate(d.checkIn)
+      const outDate = parseLocalDate(d.checkOut)
+      const stayError = validateStay(inDate, outDate)
+      if (stayError) {
+        notice = stayError.toLowerCase()
+      } else {
+        const q = quote(inDate, outDate, d.cabinIds.length)
+        const db = supabaseAdmin()
+        const { data, error } = await db.rpc('create_phone_booking', {
+          p_guest_name: d.guestName,
+          p_email: d.email,
+          p_phone: d.phone,
+          p_party_size: d.partySize,
+          p_has_pet: d.hasPet,
+          p_check_in: d.checkIn,
+          p_check_out: d.checkOut,
+          p_nights: q.nights,
+          p_nightly_subtotal: q.nightlySubtotal,
+          p_gst: q.gst,
+          p_total: q.total,
+          p_deposit_amount: q.deposit,
+          p_card_charge: q.cardCharge,
+          p_approval_token: generateToken(),
+          p_addons: d.addons,
+          p_cabin_ids: d.cabinIds,
+        })
+        if (error) {
+          console.error('create_phone_booking failed', error)
+        } else if (!data?.ok) {
+          notice = String(data?.error ?? 'error').toLowerCase()
+        } else {
+          try {
+            await sendGuestPhoneBooking(data.booking_id)
+          } catch (e) {
+            console.error('sendGuestPhoneBooking failed', e)
+          }
+          notice = 'phone-booking-created'
+        }
+      }
+    }
+  } catch (e) {
+    console.error('ownerCreatePhoneBooking failed', e)
+  }
+
+  revalidatePath('/owner/' + secret)
+  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+}
+
+// ─── resendWaiverEmail ────────────────────────────────────────────────────────
+export async function resendWaiverEmail(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  const bookingId = formData.get('bookingId') as string | null
+  if (!secretOk(secret) || !bookingId) return
+
+  let notice = 'error'
+  try {
+    const { data: b } = await supabaseAdmin().from('bookings').select('status, waivers(id)').eq('id', bookingId).single()
+    if (b?.status === 'APPROVED' && (b.waivers?.length ?? 0) === 0) {
+      await sendGuestPhoneBooking(bookingId)
+      notice = 'waiver-resent'
+    } else {
+      notice = 'waiver_not_needed'
+    }
+  } catch (e) {
+    console.error('resendWaiverEmail failed', e)
+  }
+
+  revalidatePath('/owner/' + secret)
+  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`)
 }
 
 function secretOk(secret: string | null): boolean {

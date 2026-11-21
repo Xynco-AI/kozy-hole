@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getStripe, createDepositCheckout } from '@/lib/stripe'
 import { getDepositPayUrl } from '@/lib/deposit-payment'
+import { canPayDeposit } from '@/lib/owner-rules'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,8 +15,13 @@ export async function GET(
   const { id } = await params
   const site = process.env.NEXT_PUBLIC_SITE_URL
   const db = supabaseAdmin()
-  const { data: b } = await db.from('bookings').select('*').eq('id', id).single()
+  const { data: b } = await db.from('bookings').select('*, waivers(id)').eq('id', id).single()
   if (!b) return new NextResponse('Booking not found', { status: 404 })
+
+  // Phone bookings: the guest must sign the waiver before any payment is taken.
+  if (b.status === 'APPROVED' && !canPayDeposit({ status: b.status, hasWaiver: (b.waivers?.length ?? 0) > 0 })) {
+    return NextResponse.redirect(`${site}/booking/${id}/waiver`)
+  }
 
   let url: string | null = null
   try {

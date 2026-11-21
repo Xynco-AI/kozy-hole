@@ -189,6 +189,24 @@ export function guestConfirmationMistake(
   }
 }
 
+/** Phone booking: the owner already approved it; the guest signs the waiver, then pays. */
+export function guestPhoneBooking(b: EmailBooking, l: { waiverUrl: string; holdEndsAt: Date }): Email {
+  return {
+    subject: 'Your Kozy Hole booking: sign your waiver and pay your deposit',
+    html: `
+      <h2>Thanks for booking with Kozy Hole!</h2>
+      <p>Hi ${e(b.guest_name)}, here are the details of the booking we set up for you by phone:</p>
+      ${stayDetails(b)}
+      ${priceBreakdown(b)}
+      ${arrivalExtras(b, null)}
+      <p><b>Two quick steps to lock it in:</b> sign the safety waiver, then pay your 50% deposit (${money(b.deposit_amount)}).
+        Your dates are held until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time).</p>
+      <p>${button(l.waiverUrl, 'Sign waiver and pay deposit')}</p>
+      <p>${DAMAGE_DEPOSIT_NOTE}</p>
+      <p>Questions? Reply to this email.</p>`,
+  }
+}
+
 export function guestHoldExpired(b: EmailBooking, l: { bookUrl: string }): Email {
   return {
     subject: 'Your Kozy Hole hold has expired',
