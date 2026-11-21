@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
-import { sendConfirmation, sendCancellation, sendGuestBookingUpdated } from '@/lib/email'
+import { sendConfirmation, sendCancellation, sendGuestBookingUpdated, sendGuestConfirmationMistake } from '@/lib/email'
+import { canUndoEtransfer } from '@/lib/owner-rules'
 import { approveBooking, declineBooking } from '@/lib/booking-approval'
 import { redirect } from 'next/navigation'
 import { quote, validateStay } from '@/lib/pricing'
@@ -70,6 +71,55 @@ export async function ownerEditBooking(formData: FormData): Promise<void> {
     }
   } catch (e) {
     console.error('ownerEditBooking failed', e)
+  }
+
+  revalidatePath('/owner/' + secret)
+  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+}
+
+// ─── undoEtransfer ────────────────────────────────────────────────────────────
+// "Undo: not paid yet" for an e-transfer marked received by mistake. Puts the booking
+// back to awaiting deposit with a fresh 48h hold. The "confirmed" email can't be unsent,
+// so the owner can choose to email the guest a correction.
+export async function undoEtransfer(formData: FormData): Promise<void> {
+  const secret = formData.get('secret') as string | null
+  const bookingId = formData.get('bookingId') as string | null
+  const notifyGuest = formData.get('notifyGuest') === 'on'
+  if (!secretOk(secret) || !bookingId) return
+
+  let notice = 'error'
+  try {
+    const db = supabaseAdmin()
+    const { data: b } = await db.from('bookings')
+      .select('status,payment_method,damage_deposit_status').eq('id', bookingId).single()
+    if (!b || !canUndoEtransfer(b)) {
+      notice = 'cannot_undo'
+    } else {
+      const approvedAt = new Date()
+      const { data: rows } = await db.from('bookings').update({
+        status: 'APPROVED',
+        payment_method: null,
+        amount_charged: null,
+        approved_at: approvedAt.toISOString(),
+        payment_reminder_sent_at: null,
+        stripe_session_id: null,
+      }).eq('id', bookingId).eq('status', 'CONFIRMED').eq('payment_method', 'etransfer')
+        .is('damage_deposit_status', null).select('id')
+      if (!rows?.length) {
+        notice = 'cannot_undo'
+      } else if (notifyGuest) {
+        try {
+          await sendGuestConfirmationMistake(bookingId, holdEndsAt(approvedAt.toISOString()))
+        } catch (e) {
+          console.error('sendGuestConfirmationMistake failed', e)
+        }
+        notice = 'undo-done-emailed'
+      } else {
+        notice = 'undo-done'
+      }
+    }
+  } catch (e) {
+    console.error('undoEtransfer failed', e)
   }
 
   revalidatePath('/owner/' + secret)

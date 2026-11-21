@@ -174,6 +174,21 @@ export function guestBookingUpdated(
   }
 }
 
+export function guestConfirmationMistake(
+  b: EmailBooking, l: { payUrl: string; etransferEmail: string; holdEndsAt: Date },
+): Email {
+  return {
+    subject: 'Correction: your Kozy Hole deposit has not been received yet',
+    html: `
+      <h2>Sorry, our mistake</h2>
+      <p>Hi ${e(b.guest_name)}, we sent you a "booking confirmed" email by mistake. Your deposit for ${e(dates(b))} has <b>not been received yet</b>, so your booking isn't confirmed.</p>
+      <p>Your dates are held until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time). Pay your 50% deposit to confirm:</p>
+      <p>${button(l.payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>
+      <p>Or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      <p>Already sent it? Just reply to this email and we'll sort it out. Sorry for the confusion!</p>`,
+  }
+}
+
 export function guestHoldExpired(b: EmailBooking, l: { bookUrl: string }): Email {
   return {
     subject: 'Your Kozy Hole hold has expired',
@@ -212,7 +227,10 @@ export function guestApproved(b: EmailBooking, l: { payUrl: string; etransferEma
     subject: 'Your Kozy Hole booking is approved - pay your deposit',
     html: `
       <h2>You're approved!</h2>
-      <p>${e(dates(b))}. To lock it in, pay your 50% deposit (${money(b.deposit_amount)}).</p>
+      <p>To lock it in, pay your 50% deposit (${money(b.deposit_amount)}).</p>
+      ${stayDetails(b)}
+      ${priceBreakdown(b)}
+      ${arrivalExtras(b, null)}
       <p><a href="${e(l.payUrl)}">Pay by card</a> (${money(cardCharge(b))} incl. 3% fee) or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
       <p>We hold your dates for 48 hours.</p>
       <p><strong>Heads up:</strong> 3 days before your stay you'll receive a separate email to authorize a $500/cabin damage deposit hold on your card. It is a hold only, not a charge, and it is released after checkout if the shack is left in good condition. Watch for that email closer to your trip.</p>`,

@@ -8,13 +8,15 @@ import { formatDate } from '@/lib/dates'
 import {
   ownerApprove,
   ownerDecline,
-  confirmEtransfer,
   markCompleted,
   approveReview,
   blockDates,
   ownerEditBooking,
 } from './actions'
 import CancelForm from './CancelForm'
+import ConfirmEtransferForm from './ConfirmEtransferForm'
+import UndoEtransferForm from './UndoEtransferForm'
+import { canUndoEtransfer } from '@/lib/owner-rules'
 
 type BookedCabin = { cabin_id: string; cabins: { name: string; sort_order: number } | null }
 
@@ -148,6 +150,9 @@ const NOTICES: Record<string, { ok: boolean; text: string }> = {
   min_one_night: { ok: false, text: 'Check-out must be after check-in. Nothing was changed.' },
   out_of_season: { ok: false, text: 'Those dates are outside the season (Dec 15 to Mar 31). Nothing was changed.' },
   weekend_two_night_min: { ok: false, text: 'Weekend stays need at least 2 nights. Nothing was changed.' },
+  'undo-done': { ok: true, text: 'Done. The booking is back to awaiting deposit with a fresh 48-hour hold. No email was sent.' },
+  'undo-done-emailed': { ok: true, text: 'Done. The booking is back to awaiting deposit with a fresh 48-hour hold, and the guest was emailed a correction.' },
+  cannot_undo: { ok: false, text: 'That booking can no longer be undone here (only e-transfer confirmations before the damage deposit is authorized). Nothing was changed.' },
   error: { ok: false, text: 'Something went wrong. Nothing was changed. Please try again.' },
 }
 
@@ -326,13 +331,12 @@ export default async function OwnerDashboard({
                       <DetailRow label="Deposit owed" value={money(b.deposit_amount)} />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <form action={confirmEtransfer}>
-                        <input type="hidden" name="bookingId" value={b.id} />
-                        <input type="hidden" name="secret" value={secret} />
-                        <Button type="submit" variant="secondary" size="md">
-                          Mark e-transfer received
-                        </Button>
-                      </form>
+                      <ConfirmEtransferForm
+                        bookingId={b.id}
+                        secret={secret}
+                        guestName={b.guest_name}
+                        amount={money(b.deposit_amount)}
+                      />
                       <CancelForm bookingId={b.id} secret={secret} />
                     </div>
                     <EditBookingForm booking={b} cabins={cabins} secret={secret} />
@@ -368,6 +372,9 @@ export default async function OwnerDashboard({
                         Mark completed
                       </Button>
                     </form>
+                    {canUndoEtransfer(b) && (
+                      <UndoEtransferForm bookingId={b.id} secret={secret} guestName={b.guest_name} />
+                    )}
                   </Card>
                 ))}
               </div>

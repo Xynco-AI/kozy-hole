@@ -35,6 +35,7 @@ const all = (): t.Email[] => [
   t.guestPaymentReminder(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
   t.guestHoldExpired(booking, { bookUrl: 'https://x/book' }),
   t.guestBookingUpdated(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
+  t.guestConfirmationMistake(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
 ]
 
 describe('guestBookingUpdated', () => {
@@ -184,7 +185,31 @@ describe('guestRequestReceived', () => {
   })
 })
 
+describe('guestConfirmationMistake', () => {
+  const e = t.guestConfirmationMistake(booking, {
+    payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z'),
+  })
+
+  it('apologises and says the deposit has not been received', () => {
+    expect(e.html).toMatch(/by mistake/i)
+    expect(e.html).toMatch(/not (been )?received/i)
+  })
+
+  it('gives the way to pay and the hold deadline', () => {
+    expect(e.html).toContain('href="https://x/p"')
+    expect(e.html).toContain('$367.50')
+    expect(e.html).toMatch(/Mon, Jan 11/)
+  })
+})
+
 describe('guestApproved', () => {
+  it('shows the full stay and price, so a changed request makes sense', () => {
+    const { html } = t.guestApproved({ ...booking, cabins: ['Cabin Two'] }, { payUrl: 'p', etransferEmail: 'x@y.z' })
+    expect(html).toContain('Cabin Two')
+    expect(html).toContain('$735.00')
+    expect(html).toContain('Tue, Mar 16, 2027')
+  })
+
   it('uses the e-transfer address it is given', () => {
     const { html } = t.guestApproved(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com' })
     expect(html).toContain('pay@example.com')

@@ -82,6 +82,13 @@ export async function sendGuestBookingUpdated(bookingId: string, holdEndsAt: Dat
   }), 'sendGuestBookingUpdated', bookingId)
 }
 
+export async function sendGuestConfirmationMistake(bookingId: string, holdEndsAt: Date) {
+  const b = await getBooking(bookingId)
+  await send(b.email, templates.guestConfirmationMistake(b, {
+    payUrl: `${site}/api/bookings/${b.id}/pay`, etransferEmail: etransferEmail(), holdEndsAt,
+  }), 'sendGuestConfirmationMistake', bookingId)
+}
+
 export async function sendGuestHoldExpired(bookingId: string) {
   const b = await getBooking(bookingId)
   await send(b.email, templates.guestHoldExpired(b, { bookUrl: `${site}/book` }), 'sendGuestHoldExpired', bookingId)
