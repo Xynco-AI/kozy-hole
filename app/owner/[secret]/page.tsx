@@ -16,9 +16,11 @@ import {
   resendWaiverEmail,
 } from './actions'
 import CancelForm from './CancelForm'
+import ActionForm from './ActionForm'
 import ConfirmEtransferForm from './ConfirmEtransferForm'
 import UndoEtransferForm from './UndoEtransferForm'
 import { canUndoEtransfer } from '@/lib/owner-rules'
+import { NOTICES } from '@/lib/owner-notices'
 import { ADDONS } from '@/lib/addons'
 
 type BookedCabin = { cabin_id: string; cabins: { name: string; sort_order: number } | null }
@@ -102,7 +104,7 @@ function EditBookingForm({
   return (
     <details className="mt-3 text-sm">
       <summary className="cursor-pointer text-muted hover:text-ink">Change dates or cabins</summary>
-      <form action={ownerEditBooking} className="mt-3 flex flex-col gap-3">
+      <ActionForm action={ownerEditBooking} submitLabel="Save changes" className="mt-3 flex flex-col gap-3">
         <input type="hidden" name="bookingId" value={booking.id} />
         <input type="hidden" name="secret" value={secret} />
         <div className="grid grid-cols-2 gap-2">
@@ -135,10 +137,7 @@ function EditBookingForm({
             ? ' The guest is emailed the new details and a new payment link, and their 48-hour hold restarts.'
             : ' The guest sees the new price when you approve.'}
         </p>
-        <Button type="submit" variant="ghost" size="md" className="self-start">
-          Save changes
-        </Button>
-      </form>
+      </ActionForm>
     </details>
   )
 }
@@ -159,7 +158,13 @@ function PhoneBookingForm({ cabins, secret }: { cabins: { id: string; name: stri
   return (
     <details className="rounded-[var(--radius-card)] border border-ice/30 bg-surface p-5">
       <summary className="cursor-pointer font-semibold text-ink">+ New phone booking</summary>
-      <form action={ownerCreatePhoneBooking} className="mt-4 flex flex-col gap-4">
+      <ActionForm
+        action={ownerCreatePhoneBooking}
+        submitLabel="Create booking and email guest"
+        submitVariant="primary"
+        resetOnSuccess
+        className="mt-4 flex flex-col gap-4"
+      >
         <input type="hidden" name="secret" value={secret} />
         <div className="grid gap-3 sm:grid-cols-2">
           <label className={label}>Guest name<input name="guestName" required minLength={2} className={input} /></label>
@@ -195,34 +200,11 @@ function PhoneBookingForm({ cabins, secret }: { cabins: { id: string; name: stri
           The booking is saved as approved, and the guest gets an email to sign the safety waiver and
           then pay their 50% deposit. Their dates are held for 48 hours.
         </p>
-        <Button type="submit" variant="primary" size="md" className="self-start">
-          Create booking and email guest
-        </Button>
-      </form>
+      </ActionForm>
     </details>
   )
 }
 
-const NOTICES: Record<string, { ok: boolean; text: string }> = {
-  'booking-updated': { ok: true, text: 'Booking updated and the price recalculated. Approve it when ready.' },
-  'booking-updated-emailed': { ok: true, text: 'Booking updated. The guest has been emailed the new dates, price and a fresh payment link (48-hour hold restarted).' },
-  cabin_unavailable: { ok: false, text: 'A cabin is already booked or blocked for those dates. Nothing was changed.' },
-  not_editable: { ok: false, text: 'Only unpaid bookings can be changed. Nothing was changed.' },
-  no_cabins: { ok: false, text: 'Pick at least one cabin. Nothing was changed.' },
-  invalid_dates: { ok: false, text: 'Check-out must be after check-in. Nothing was changed.' },
-  min_one_night: { ok: false, text: 'Check-out must be after check-in. Nothing was changed.' },
-  out_of_season: { ok: false, text: 'Those dates are outside the season (Dec 15 to Mar 31). Nothing was changed.' },
-  weekend_two_night_min: { ok: false, text: 'Weekend stays need at least 2 nights. Nothing was changed.' },
-  'undo-done': { ok: true, text: 'Done. The booking is back to awaiting deposit with a fresh 48-hour hold. No email was sent.' },
-  'undo-done-emailed': { ok: true, text: 'Done. The booking is back to awaiting deposit with a fresh 48-hour hold, and the guest was emailed a correction.' },
-  cannot_undo: { ok: false, text: 'That booking can no longer be undone here (only e-transfer confirmations before the damage deposit is authorized). Nothing was changed.' },
-  'phone-booking-created': { ok: true, text: 'Phone booking created. The guest has been emailed a link to sign the waiver and pay their deposit (48-hour hold started).' },
-  'waiver-resent': { ok: true, text: 'Waiver email sent again.' },
-  waiver_not_needed: { ok: false, text: 'That booking already has a signed waiver (or is no longer awaiting deposit). No email sent.' },
-  missing_details: { ok: false, text: 'Please fill in the name, phone, party size and both dates. Nothing was saved.' },
-  invalid_email: { ok: false, text: "That email address doesn't look right. The waiver and payment link are sent there. Nothing was saved." },
-  error: { ok: false, text: 'Something went wrong. Nothing was changed. Please try again.' },
-}
 
 export default async function OwnerDashboard({
   params,

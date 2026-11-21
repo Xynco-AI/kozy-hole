@@ -6,6 +6,7 @@ import { safeEqual } from '@/lib/tokens'
 import { sendConfirmation, sendCancellation, sendGuestBookingUpdated, sendGuestConfirmationMistake, sendGuestPhoneBooking } from '@/lib/email'
 import { generateToken } from '@/lib/tokens'
 import { canUndoEtransfer, parsePhoneBooking } from '@/lib/owner-rules'
+import { noticeFor } from '@/lib/owner-notices'
 import { approveBooking, declineBooking } from '@/lib/booking-approval'
 import { redirect } from 'next/navigation'
 import { quote, validateStay } from '@/lib/pricing'
@@ -19,13 +20,13 @@ import { parseLocalDate } from '@/lib/dates'
 // availability re-checked atomically in Postgres (update_booking, migration 0008).
 // For an approved booking the old Stripe link is closed and the guest is emailed the
 // new details with a fresh pay link. Result shown via ?notice= on the dashboard.
-export async function ownerEditBooking(formData: FormData): Promise<void> {
+export async function ownerEditBooking(formData: FormData): Promise<{ notice: string }> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
   const checkIn = String(formData.get('checkIn') ?? '')
   const checkOut = String(formData.get('checkOut') ?? '')
   const cabinIds = [...new Set(formData.getAll('cabinIds').map(String))]
-  if (!secretOk(secret) || !bookingId) return
+  if (!secretOk(secret) || !bookingId) return { notice: 'error' }
 
   let notice = 'error'
   try {
@@ -74,8 +75,10 @@ export async function ownerEditBooking(formData: FormData): Promise<void> {
     console.error('ownerEditBooking failed', e)
   }
 
+  // Returned to the form (not a redirect) so a failed save keeps what Rob typed.
+  if (!noticeFor(notice).ok) return { notice }
   revalidatePath('/owner/' + secret)
-  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+  return { notice }
 }
 
 // ─── undoEtransfer ────────────────────────────────────────────────────────────
@@ -130,9 +133,9 @@ export async function undoEtransfer(formData: FormData): Promise<void> {
 // ─── ownerCreatePhoneBooking ──────────────────────────────────────────────────
 // Rob takes a booking by phone. It's created already approved (48h hold starts now),
 // with no waiver: the guest is emailed a link to sign it, then pay (migration 0009).
-export async function ownerCreatePhoneBooking(formData: FormData): Promise<void> {
+export async function ownerCreatePhoneBooking(formData: FormData): Promise<{ notice: string }> {
   const secret = formData.get('secret') as string | null
-  if (!secretOk(secret)) return
+  if (!secretOk(secret)) return { notice: 'error' }
 
   let notice = 'error'
   try {
@@ -185,8 +188,10 @@ export async function ownerCreatePhoneBooking(formData: FormData): Promise<void>
     console.error('ownerCreatePhoneBooking failed', e)
   }
 
+  // Returned to the form (not a redirect) so a failed save keeps what Rob typed.
+  if (!noticeFor(notice).ok) return { notice }
   revalidatePath('/owner/' + secret)
-  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+  return { notice }
 }
 
 // ─── resendWaiverEmail ────────────────────────────────────────────────────────
