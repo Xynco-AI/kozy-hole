@@ -29,37 +29,49 @@ The goal is simple: **less time on logistics, more cabins booked, and a professi
 
 ## What it does
 
-### For guests
+### For guests (no account or login needed)
 - Browse the 3 cabins, amenities, rates, location, and policies
 - Pick one or more cabins and a date range (only valid, in-season, available dates)
-- See a live, accurate price: nightly total, 5% GST, and the 50% deposit due
-- Choose card (+3% fee) or e-transfer (no fee) for the deposit
-- Sign a digital waiver as part of booking
-- Track their booking status and pay the deposit once approved
+- See a live, accurate price: nights × cabins, 5% GST, the 50% deposit, and what's paid on arrival (balance, pet fee, add-ons)
+- Sign the safety waiver as part of booking (phone bookings sign it from an emailed link)
+- Get an email at every step: request received, approved, confirmed, reminders
+- Pay the deposit by card (+3% fee) or e-transfer (no fee) once approved
+- Authorize the $500/cabin damage deposit as a card hold (not a charge) 3 days before the stay
+
+Guests never create an account. Every page they need opens from a private link in their emails.
 
 ### For the owners
-- Get an **email alert** (WhatsApp coming in phase 2) for every new request, with one-tap **Approve / Decline**
-- A private dashboard (`/owner/<secret>`) to review requests, confirm e-transfer payments, block dates, mark stays complete, and approve guest reviews
-- Automatic confirmation emails to guests; automatic release of holds left unpaid for 48 hours
+- An **email alert** for every new request, with one-tap **Approve / Decline**, plus a reminder around 5 AM each day while any request is waiting
+- A private dashboard (`/owner/<secret>`, no login: the link is the key) to:
+  - approve or decline requests
+  - **take bookings by phone**: the guest is emailed to sign the waiver, then pay
+  - **change dates or cabins** on any unpaid booking (the price updates, and the guest is emailed if already approved)
+  - confirm e-transfer payments (with an "Are you sure?" step, and an undo for mistakes)
+  - block dates, mark stays complete, cancel bookings, and approve guest reviews
+- Unpaid guests get a reminder after 24 hours; holds are released automatically after 48 hours
 
 ---
 
 ## How a booking flows
 
 ```
-Guest requests dates + signs waiver
-        │
-        ▼
-Owner gets an alert → Approves or Declines
-        │ (approved)
-        ▼
-Guest pays 50% deposit (Stripe card or e-transfer)
-        │
-        ▼
-Booking CONFIRMED — dates locked, both sides emailed
-        │
-        ▼
-Balance + $500 damage deposit (+ $50 pet fee) collected on arrival at the lake
+Guest requests online + signs waiver        Owner enters a phone booking
+        │                                            │
+        ▼                                            ▼
+Owner gets an alert → Approves or Declines    Guest signs waiver from email
+        │ (approved)                                 │
+        └──────────────────┬─────────────────────────┘
+                           ▼
+Guest pays 50% deposit within 48 hours (card or e-transfer)
+                           │
+                           ▼
+Booking CONFIRMED, dates locked, both sides emailed
+                           │
+                           ▼
+3 days before: guest authorizes the $500/cabin damage-deposit card hold
+                           │
+                           ▼
+Balance (+ $50 pet fee and add-ons) paid on arrival at the lake
 ```
 
 ## Key business rules baked in
@@ -67,7 +79,8 @@ Balance + $500 damage deposit (+ $50 pet fee) collected on arrival at the lake
 - **Rates:** $350/night weekday, $450/night weekends & holidays
 - **2-night minimum** on weekends
 - **5% GST** on the online total; **3% surcharge** on card payments only
-- **50% deposit** to book; balance, **$500/cabin damage deposit**, and **$50/stay pet fee** due on arrival
+- **50% deposit** to book, held **48 hours** after approval; balance and **$50/stay pet fee** due on arrival
+- **$500/cabin damage deposit** as a card hold authorized online 3 days before the stay, released after checkout
 - **Season:** December 15 – March 31 (recurring yearly)
 - **Cancellation:** 1 week notice for a credit toward a future stay; no refunds
 - **Check-in 1 PM / check-out 11 AM**
@@ -87,7 +100,9 @@ Built with **Next.js (App Router) + Supabase (Postgres) + Stripe + Resend**, hos
 npm install
 cp .env.local.example .env.local   # fill in real keys to use live data
 npm run dev                         # http://localhost:3000
-npm test                            # unit tests for pricing/availability/season
+npm test                            # unit + database tests (pricing, booking rules, emails, migrations in PGlite)
 ```
+
+> **Careful:** with real keys in `.env.local`, the local site uses the **live** database and sends **real** emails. Test with far-future dates and your own email, redirect `OWNER_EMAIL` so Rob isn't emailed, and delete test bookings afterwards. See [`CLAUDE.md`](CLAUDE.md) for details.
 
 > Note: this project uses a newer version of Next.js — see [`AGENTS.md`](AGENTS.md) before changing code.

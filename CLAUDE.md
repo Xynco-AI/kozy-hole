@@ -27,6 +27,10 @@ Windows ARM64: if vitest/rolldown native bindings fail to load, delete `node_mod
 
 Path alias `@/` maps to the project root, in both tsconfig and vitest.
 
+**Running locally touches production.** `.env.local` points at the live Supabase database and the real Resend key, and `OWNER_EMAIL` is the owner's real inbox. Anything you book, approve or cancel on `localhost` changes real data and can email Rob or guests. To test safely, override `OWNER_EMAIL` (and `NEXT_PUBLIC_SITE_URL`) in the shell before `next dev`, use far-future dates and your own email as the guest, and delete test bookings afterwards. `STRIPE_SECRET_KEY` in `.env.local` is a placeholder, so card payment fails locally (the pay page shows "Card payment isn't available"); a full Stripe test needs a real `sk_test_` key and `stripe listen --forward-to localhost:<port>/api/stripe/webhook`. Load extra env vars with `set -a; . <(tr -d '\r' < file)`; `node --env-file` breaks `next dev`.
+
+The project lives in OneDrive, which can lock files in `.next`; if a build fails once with odd errors, rebuild before debugging.
+
 ## Architecture
 
 **Pure business logic lives in `lib/` and is unit-tested.** `pricing.ts` covers rates, GST, card surcharge, deposit and `validateStay`. `season.ts` is the Dec 15 to Mar 31 window. `holidays.ts` holds the Alberta holidays that get the weekend rate. `deposit-payment.ts` holds the card-deposit pay-link and webhook logic, with I/O passed in as deps. These modules have no I/O. Change pricing or rules here, not in components, because the quote shown in the UI and the amounts stored in the DB both come from `quote()`.
@@ -52,7 +56,7 @@ How a booking moves through the system:
 
 **Email content** lives in `lib/email-templates.ts` as pure, tested functions. `lib/email.ts` only loads the booking and sends. Add-on menu and prices are in `lib/addons.ts`; the stored label must stay stable because bookings store it.
 
-**Auth:** there are no user accounts. Access is controlled by secrets in URLs: a per-booking `approval_token` and the dashboard secret. Compare them with `safeEqual()` from `lib/tokens.ts`, which is timing-safe.
+**Auth:** there are no user accounts for guests or the owner. Guests reach their booking, waiver and payment pages through emailed links keyed by the booking's UUID. The owner's dashboard is `/owner/<OWNER_DASHBOARD_SECRET>`, and the emailed approve/decline links use a per-booking `approval_token`. Compare secrets with `safeEqual()` from `lib/tokens.ts`, which is timing-safe.
 
 **Email:** sent with Resend from the kozyhole.ca domain. Do not use em dashes in email copy; they were deliberately removed, and a test enforces it.
 
