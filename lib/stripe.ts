@@ -66,3 +66,13 @@ export async function createDepositCheckout(params: {
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/booking/${params.bookingId}`,
   })
 }
+
+/** Best-effort: close an unpaid Checkout session so its old amount can't be paid. */
+export async function expireCheckoutSession(sessionId: string): Promise<void> {
+  try {
+    const s = await getStripe().checkout.sessions.retrieve(sessionId)
+    if (s.status === 'open') await getStripe().checkout.sessions.expire(sessionId)
+  } catch (e) {
+    console.error('expireCheckoutSession failed', { sessionId, e })
+  }
+}

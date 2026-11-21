@@ -12,7 +12,7 @@ import {
   markCompleted,
   approveReview,
   blockDates,
-  ownerChangeCabins,
+  ownerEditBooking,
 } from './actions'
 import CancelForm from './CancelForm'
 
@@ -81,11 +81,73 @@ function EmptyState({ message }: { message: string }) {
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
+/** "Change dates or cabins" for an unpaid booking (pending or awaiting deposit). */
+function EditBookingForm({
+  booking,
+  cabins,
+  secret,
+}: {
+  booking: { id: string; check_in: string; check_out: string; status: string; booking_cabins?: BookedCabin[] }
+  cabins: { id: string; name: string }[]
+  secret: string
+}) {
+  const current = bookedCabins(booking)
+  const inputClass =
+    'rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-ice/60'
+  return (
+    <details className="mt-3 text-sm">
+      <summary className="cursor-pointer text-muted hover:text-ink">Change dates or cabins</summary>
+      <form action={ownerEditBooking} className="mt-3 flex flex-col gap-3">
+        <input type="hidden" name="bookingId" value={booking.id} />
+        <input type="hidden" name="secret" value={secret} />
+        <div className="grid grid-cols-2 gap-2">
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            Check-in
+            <input type="date" name="checkIn" required defaultValue={booking.check_in} className={inputClass} />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            Check-out
+            <input type="date" name="checkOut" required defaultValue={booking.check_out} className={inputClass} />
+          </label>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {cabins.map((c) => (
+            <label key={c.id} className="flex items-center gap-2 text-ink">
+              <input
+                type="checkbox"
+                name="cabinIds"
+                value={c.id}
+                defaultChecked={current.some((bc) => bc.id === c.id)}
+                className="h-4 w-4 accent-[var(--color-ice)]"
+              />
+              {c.name}
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-muted">
+          The price is recalculated.
+          {booking.status === 'APPROVED'
+            ? ' The guest is emailed the new details and a new payment link, and their 48-hour hold restarts.'
+            : ' The guest sees the new price when you approve.'}
+        </p>
+        <Button type="submit" variant="ghost" size="md" className="self-start">
+          Save changes
+        </Button>
+      </form>
+    </details>
+  )
+}
+
 const NOTICES: Record<string, { ok: boolean; text: string }> = {
-  'cabins-updated': { ok: true, text: 'Cabins updated and the price recalculated. Approve it when ready.' },
-  cabin_unavailable: { ok: false, text: 'That cabin is already booked or blocked for those dates. Nothing was changed.' },
-  not_pending: { ok: false, text: 'Only requests that have not been approved yet can be changed.' },
-  no_cabins: { ok: false, text: 'Pick at least one cabin.' },
+  'booking-updated': { ok: true, text: 'Booking updated and the price recalculated. Approve it when ready.' },
+  'booking-updated-emailed': { ok: true, text: 'Booking updated. The guest has been emailed the new dates, price and a fresh payment link (48-hour hold restarted).' },
+  cabin_unavailable: { ok: false, text: 'A cabin is already booked or blocked for those dates. Nothing was changed.' },
+  not_editable: { ok: false, text: 'Only unpaid bookings can be changed. Nothing was changed.' },
+  no_cabins: { ok: false, text: 'Pick at least one cabin. Nothing was changed.' },
+  invalid_dates: { ok: false, text: 'Check-out must be after check-in. Nothing was changed.' },
+  min_one_night: { ok: false, text: 'Check-out must be after check-in. Nothing was changed.' },
+  out_of_season: { ok: false, text: 'Those dates are outside the season (Dec 15 to Mar 31). Nothing was changed.' },
+  weekend_two_night_min: { ok: false, text: 'Weekend stays need at least 2 nights. Nothing was changed.' },
   error: { ok: false, text: 'Something went wrong. Nothing was changed. Please try again.' },
 }
 
@@ -130,7 +192,7 @@ export default async function OwnerDashboard({
         .order('created_at', { ascending: true }),
       db
         .from('bookings')
-        .select('*')
+        .select('*, booking_cabins(cabin_id, cabins(name, sort_order))')
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: true }),
       db
@@ -238,29 +300,7 @@ export default async function OwnerDashboard({
                         </Button>
                       </form>
                     </div>
-                    <details className="mt-3 text-sm">
-                      <summary className="cursor-pointer text-muted hover:text-ink">Change cabins</summary>
-                      <form action={ownerChangeCabins} className="mt-3 flex flex-col gap-2">
-                        <input type="hidden" name="bookingId" value={b.id} />
-                        <input type="hidden" name="secret" value={secret} />
-                        {cabins.map((c) => (
-                          <label key={c.id} className="flex items-center gap-2 text-ink">
-                            <input
-                              type="checkbox"
-                              name="cabinIds"
-                              value={c.id}
-                              defaultChecked={bookedCabins(b).some((bc) => bc.id === c.id)}
-                              className="h-4 w-4 accent-[var(--color-ice)]"
-                            />
-                            {c.name}
-                          </label>
-                        ))}
-                        <p className="text-xs text-muted">The price is recalculated for the new number of cabins.</p>
-                        <Button type="submit" variant="ghost" size="md" className="self-start">
-                          Save cabins
-                        </Button>
-                      </form>
-                    </details>
+                    <EditBookingForm booking={b} cabins={cabins} secret={secret} />
                   </Card>
                 ))}
               </div>
@@ -282,6 +322,7 @@ export default async function OwnerDashboard({
                       <DetailRow label="Phone" value={<a href={`tel:${b.phone}`} className="text-ice underline-offset-2 hover:underline">{b.phone}</a>} />
                       <DetailRow label="Dates" value={`${fmtDate(b.check_in)} – ${fmtDate(b.check_out)}`} />
                       <DetailRow label="Nights" value={b.nights} />
+                      <DetailRow label="Cabins" value={bookedCabins(b).map((c) => c.name).join(', ') || '—'} />
                       <DetailRow label="Deposit owed" value={money(b.deposit_amount)} />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -294,6 +335,7 @@ export default async function OwnerDashboard({
                       </form>
                       <CancelForm bookingId={b.id} secret={secret} />
                     </div>
+                    <EditBookingForm booking={b} cabins={cabins} secret={secret} />
                   </Card>
                 ))}
               </div>

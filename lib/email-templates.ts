@@ -155,6 +155,25 @@ export function guestPaymentReminder(
   }
 }
 
+export function guestBookingUpdated(
+  b: EmailBooking, l: { payUrl: string; etransferEmail: string; holdEndsAt: Date },
+): Email {
+  return {
+    subject: 'Your Kozy Hole booking has been updated',
+    html: `
+      <h2>Your booking has been updated</h2>
+      <p>Hi ${e(b.guest_name)}, we've changed your booking as discussed. Here are the new details:</p>
+      ${stayDetails(b)}
+      ${priceBreakdown(b)}
+      ${arrivalExtras(b, null)}
+      <p>Your dates are held until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time). Pay your 50% deposit to confirm.
+        <b>Any earlier payment link no longer works</b>, so please use this one:</p>
+      <p>${button(l.payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>
+      <p>Or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      <p>Questions? Reply to this email.</p>`,
+  }
+}
+
 export function guestHoldExpired(b: EmailBooking, l: { bookUrl: string }): Email {
   return {
     subject: 'Your Kozy Hole hold has expired',

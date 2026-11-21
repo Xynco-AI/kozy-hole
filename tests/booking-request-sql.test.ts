@@ -203,6 +203,78 @@ describe('create_booking_request', () => {
     })
   })
 
+  describe('update_booking (owner changes dates and/or cabins on an unpaid booking)', () => {
+    type EditResult = RpcResult & { previous_status?: string; old_session_id?: string | null }
+
+    async function edit(id: string, checkIn: string, checkOut: string, cabinIds: string[], subtotal = 700): Promise<EditResult> {
+      const { rows } = await db.query<{ r: EditResult }>(
+        `select update_booking(
+           p_booking_id => $1::uuid, p_check_in => $2::date, p_check_out => $3::date, p_nights => 2,
+           p_cabin_ids => $4::uuid[], p_nightly_subtotal => $5, p_gst => $5 * 0.05, p_total => $5 * 1.05,
+           p_deposit_amount => $5 * 0.525, p_card_charge => $5 * 0.54075
+         ) as r`, [id, checkIn, checkOut, cabinIds, subtotal])
+      return rows[0].r
+    }
+    const row = async (id: string) => (await db.query<Record<string, string | null>>(
+      `select status, check_in::text, check_out::text, total, stripe_session_id, approved_at, payment_reminder_sent_at
+         from bookings where id = $1`, [id])).rows[0]
+
+    it('moves a pending request to new dates and re-prices it', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect(await edit(b.booking_id!, '2027-02-01', '2027-02-03', [cabinA], 700))
+        .toEqual({ ok: true, previous_status: 'REQUESTED', old_session_id: null })
+      expect(await row(b.booking_id!)).toMatchObject({ check_in: '2027-02-01', check_out: '2027-02-03', total: '735.00' })
+    })
+
+    it('can shift dates onto overlapping days the booking itself already holds', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect((await edit(b.booking_id!, '2027-01-16', '2027-01-18', [cabinA])).ok).toBe(true)
+    })
+
+    it('refuses new dates that clash with another booking, and changes nothing', async () => {
+      await request('2027-02-01', '2027-02-03', [cabinA])
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect(await edit(b.booking_id!, '2027-02-02', '2027-02-04', [cabinA]))
+        .toEqual({ ok: false, error: 'CABIN_UNAVAILABLE', cabin_id: cabinA })
+      expect(await row(b.booking_id!)).toMatchObject({ check_in: '2027-01-15', check_out: '2027-01-17' })
+    })
+
+    it('refuses new dates inside an owner block', async () => {
+      await db.query(`insert into blocked_dates (cabin_id, start_date, end_date) values ($1, '2027-02-02', '2027-02-02')`, [cabinA])
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect((await edit(b.booking_id!, '2027-02-01', '2027-02-03', [cabinA])).ok).toBe(false)
+    })
+
+    it('on an approved booking: drops the old payment link and restarts the hold', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      await db.query(
+        `update bookings set status = 'APPROVED', approved_at = now() - interval '40 hours',
+                stripe_session_id = 'cs_old', payment_reminder_sent_at = now() where id = $1`, [b.booking_id])
+      expect(await edit(b.booking_id!, '2027-02-01', '2027-02-03', [cabinB]))
+        .toEqual({ ok: true, previous_status: 'APPROVED', old_session_id: 'cs_old' })
+      const r = await row(b.booking_id!)
+      expect(r).toMatchObject({ status: 'APPROVED', stripe_session_id: null, payment_reminder_sent_at: null })
+      expect(Date.now() - new Date(r.approved_at!).getTime()).toBeLessThan(60_000)
+    })
+
+    it('will not touch a paid booking', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      await db.query(`update bookings set status = 'CONFIRMED' where id = $1`, [b.booking_id])
+      expect(await edit(b.booking_id!, '2027-02-01', '2027-02-03', [cabinA])).toEqual({ ok: false, error: 'NOT_EDITABLE' })
+    })
+
+    it('rejects check-out on or before check-in', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      expect(await edit(b.booking_id!, '2027-02-03', '2027-02-03', [cabinA])).toEqual({ ok: false, error: 'INVALID_DATES' })
+    })
+
+    it('cannot be called with the public anon key', async () => {
+      const b = await request('2027-01-15', '2027-01-17', [cabinA])
+      await db.exec(`set role anon`)
+      await expect(edit(b.booking_id!, '2027-02-01', '2027-02-03', [cabinA])).rejects.toThrow(/permission denied/)
+    })
+  })
+
   it('adds a payment_reminder_sent_at column for the unpaid-deposit reminder', async () => {
     const { rows } = await db.query(
       `select 1 from information_schema.columns where table_name = 'bookings' and column_name = 'payment_reminder_sent_at'`)

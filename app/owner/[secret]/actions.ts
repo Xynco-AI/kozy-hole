@@ -3,42 +3,73 @@
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
-import { sendConfirmation, sendCancellation } from '@/lib/email'
+import { sendConfirmation, sendCancellation, sendGuestBookingUpdated } from '@/lib/email'
 import { approveBooking, declineBooking } from '@/lib/booking-approval'
 import { redirect } from 'next/navigation'
-import { quote } from '@/lib/pricing'
+import { quote, validateStay } from '@/lib/pricing'
+import { expireCheckoutSession } from '@/lib/stripe'
+import { holdEndsAt } from '@/lib/daily-jobs'
 import { parseLocalDate } from '@/lib/dates'
 
-// ─── ownerChangeCabins ────────────────────────────────────────────────────────
-// Change which cabins a pending request is for (e.g. a guest who picked all 3 by
-// mistake). Re-prices and re-checks availability atomically in Postgres
-// (update_booking_cabins, migration 0007). Result shown via ?notice= on the dashboard.
-export async function ownerChangeCabins(formData: FormData): Promise<void> {
+// ─── ownerEditBooking ─────────────────────────────────────────────────────────
+// Change the dates and/or cabins of an unpaid booking (pending or awaiting deposit).
+// Same stay rules as online booking (season, weekend minimum), re-priced, and
+// availability re-checked atomically in Postgres (update_booking, migration 0008).
+// For an approved booking the old Stripe link is closed and the guest is emailed the
+// new details with a fresh pay link. Result shown via ?notice= on the dashboard.
+export async function ownerEditBooking(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  const cabinIds = formData.getAll('cabinIds').map(String)
+  const checkIn = String(formData.get('checkIn') ?? '')
+  const checkOut = String(formData.get('checkOut') ?? '')
+  const cabinIds = [...new Set(formData.getAll('cabinIds').map(String))]
   if (!secretOk(secret) || !bookingId) return
 
   let notice = 'error'
   try {
-    const db = supabaseAdmin()
-    const { data: b } = await db.from('bookings').select('check_in,check_out').eq('id', bookingId).single()
-    if (b) {
-      const q = quote(parseLocalDate(b.check_in), parseLocalDate(b.check_out), new Set(cabinIds).size)
-      const { data, error } = await db.rpc('update_booking_cabins', {
-        p_booking_id: bookingId,
-        p_cabin_ids: cabinIds,
-        p_nightly_subtotal: q.nightlySubtotal,
-        p_gst: q.gst,
-        p_total: q.total,
-        p_deposit_amount: q.deposit,
-        p_card_charge: q.cardCharge,
-      })
-      if (error) console.error('update_booking_cabins failed', error)
-      else notice = data?.ok ? 'cabins-updated' : String(data?.error ?? 'error').toLowerCase()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkIn) || !/^\d{4}-\d{2}-\d{2}$/.test(checkOut)) {
+      notice = 'invalid_dates'
+    } else {
+      const inDate = parseLocalDate(checkIn)
+      const outDate = parseLocalDate(checkOut)
+      const stayError = validateStay(inDate, outDate)
+      if (stayError) {
+        notice = stayError.toLowerCase()
+      } else {
+        const q = quote(inDate, outDate, cabinIds.length)
+        const db = supabaseAdmin()
+        const { data, error } = await db.rpc('update_booking', {
+          p_booking_id: bookingId,
+          p_check_in: checkIn,
+          p_check_out: checkOut,
+          p_nights: q.nights,
+          p_cabin_ids: cabinIds,
+          p_nightly_subtotal: q.nightlySubtotal,
+          p_gst: q.gst,
+          p_total: q.total,
+          p_deposit_amount: q.deposit,
+          p_card_charge: q.cardCharge,
+        })
+        if (error) {
+          console.error('update_booking failed', error)
+        } else if (!data?.ok) {
+          notice = String(data?.error ?? 'error').toLowerCase()
+        } else if (data.previous_status === 'APPROVED') {
+          if (data.old_session_id) await expireCheckoutSession(data.old_session_id)
+          const { data: b } = await db.from('bookings').select('approved_at').eq('id', bookingId).single()
+          try {
+            await sendGuestBookingUpdated(bookingId, holdEndsAt(b!.approved_at))
+          } catch (e) {
+            console.error('sendGuestBookingUpdated failed', e)
+          }
+          notice = 'booking-updated-emailed'
+        } else {
+          notice = 'booking-updated'
+        }
+      }
     }
   } catch (e) {
-    console.error('ownerChangeCabins failed', e)
+    console.error('ownerEditBooking failed', e)
   }
 
   revalidatePath('/owner/' + secret)

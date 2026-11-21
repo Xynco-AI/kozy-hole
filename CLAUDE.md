@@ -46,7 +46,7 @@ How a booking moves through the system:
    - `/api/cron/send-deposit-reminders` sends the damage-deposit request 3 days before check-in.
    - Card checkout sessions are created with `expires_at` capped at the end of the 48h hold, so a card can't be charged after the hold lapses.
 
-**Owner can change cabins** on a REQUESTED booking from the dashboard. This calls the Postgres function `update_booking_cabins` (migration `0007`), which re-checks availability and stores the re-priced amounts.
+**Owner can change dates and cabins** on any unpaid booking (REQUESTED or APPROVED) from the dashboard. This calls the Postgres function `update_booking` (migration `0008`), which re-checks availability and stores the re-priced amounts. For an APPROVED booking it clears the Stripe session and restarts the 48h hold; the action then expires the old session in Stripe and emails the guest. `update_booking_cabins` (0007) is superseded.
 
 **Email content** lives in `lib/email-templates.ts` as pure, tested functions. `lib/email.ts` only loads the booking and sends. Add-on menu and prices are in `lib/addons.ts`; the stored label must stay stable because bookings store it.
 

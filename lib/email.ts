@@ -75,6 +75,13 @@ export async function sendGuestPaymentReminder(bookingId: string, holdEndsAt: Da
   }), 'sendGuestPaymentReminder', bookingId)
 }
 
+export async function sendGuestBookingUpdated(bookingId: string, holdEndsAt: Date) {
+  const b = await getBooking(bookingId)
+  await send(b.email, templates.guestBookingUpdated(b, {
+    payUrl: `${site}/api/bookings/${b.id}/pay`, etransferEmail: etransferEmail(), holdEndsAt,
+  }), 'sendGuestBookingUpdated', bookingId)
+}
+
 export async function sendGuestHoldExpired(bookingId: string) {
   const b = await getBooking(bookingId)
   await send(b.email, templates.guestHoldExpired(b, { bookUrl: `${site}/book` }), 'sendGuestHoldExpired', bookingId)

@@ -34,7 +34,31 @@ const all = (): t.Email[] => [
   t.ownerPendingReminder([booking], { dashboardUrl: 'https://x/owner' }),
   t.guestPaymentReminder(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
   t.guestHoldExpired(booking, { bookUrl: 'https://x/book' }),
+  t.guestBookingUpdated(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z') }),
 ]
+
+describe('guestBookingUpdated', () => {
+  const e = t.guestBookingUpdated(booking, {
+    payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: new Date('2027-01-11T20:00:00Z'),
+  })
+
+  it('says the booking was changed and shows the new stay and price', () => {
+    expect(e.subject.toLowerCase()).toContain('updated')
+    expect(e.html).toContain('Tue, Mar 16, 2027')
+    expect(e.html).toContain('Cabin One')
+    expect(e.html).toContain('$735.00')
+  })
+
+  it('warns that older payment links no longer work, and gives the new one', () => {
+    expect(e.html).toMatch(/earlier payment link/i)
+    expect(e.html).toContain('href="https://x/p"')
+    expect(e.html).toContain('pay@example.com')
+  })
+
+  it('says when the new hold ends', () => {
+    expect(e.html).toMatch(/Mon, Jan 11.*1:00\s?p\.?m\.?/i)
+  })
+})
 
 describe('ownerPendingReminder', () => {
   const two = [booking, { ...booking, id: 'b2', guest_name: 'Second Guest', cabins: ['Cabin Two'] }]
