@@ -24,6 +24,7 @@ export async function GET(
   }
 
   let url: string | null = null
+  let failed = false
   try {
     url = await getDepositPayUrl(b, {
       retrieveSession: async (sid) => {
@@ -37,9 +38,11 @@ export async function GET(
     })
   } catch (e) {
     console.error('pay link failed', { bookingId: id, e })
+    failed = true
   }
 
   // Not payable (already paid, expired, declined) or Stripe failed: show the booking page,
   // which explains the current status and offers e-transfer.
-  return NextResponse.redirect(url ?? `${site}/booking/${id}`)
+  // If Stripe itself failed, say so on the booking page instead of silently bouncing back.
+  return NextResponse.redirect(url ?? `${site}/booking/${id}${failed ? '?pay=unavailable' : ''}`)
 }

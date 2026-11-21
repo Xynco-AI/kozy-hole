@@ -181,6 +181,15 @@ export default async function BookingPage({
 
               {hasWaiver ? (
                 <>
+                  {sp.pay === "unavailable" && (
+                    <p
+                      role="alert"
+                      className="mt-8 rounded-xl border border-danger/50 bg-danger/10 px-5 py-4 text-sm leading-relaxed text-ink"
+                    >
+                      Card payment isn&apos;t available right now. Please pay by e-transfer (details
+                      below), or try the card option again in a little while.
+                    </p>
+                  )}
               {/* Payment options */}
               <div className="mt-10 grid gap-6 sm:grid-cols-2">
                 {/* Card */}
