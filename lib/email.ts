@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import { etransferEmail } from './settings'
 import { holdEndsAt } from './daily-jobs'
+import { cardPaymentsOn } from './payments-config'
 import * as templates from './email-templates'
 import type { Email, EmailBooking } from './email-templates'
 
@@ -20,7 +21,7 @@ async function getBooking(id: string): Promise<EmailBooking> {
     .filter((c): c is { name: string; sort_order: number } => !!c)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map(c => c.name)
-  return { ...data!, cabins }
+  return { ...data!, cabins, card_payments: cardPaymentsOn() }
 }
 
 async function send(to: string, email: Email, label: string, bookingId: string) {

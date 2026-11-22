@@ -25,6 +25,8 @@ export type EmailBooking = {
   card_charge: number | string | null
   addons: string[] | null
   cabins: string[]
+  /** false while card payments are switched off (lib/payments-config.ts); default on. */
+  card_payments?: boolean
 }
 
 const CARD_SURCHARGE = 0.03
@@ -42,6 +44,7 @@ const e = escapeHtml
 const dates = (b: EmailBooking) => `${formatDate(b.check_in)} to ${formatDate(b.check_out)}`
 const cardCharge = (b: EmailBooking) => Number(b.card_charge ?? Number(b.deposit_amount) * (1 + CARD_SURCHARGE))
 const balance = (b: EmailBooking) => Number(b.total) - Number(b.deposit_amount)
+const cardOn = (b: EmailBooking) => b.card_payments !== false
 
 const button = (href: string, label: string, color = '#1b6') =>
   `<a href="${e(href)}" style="background:${color};color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block">${e(label)}</a>`
@@ -74,7 +77,9 @@ function priceBreakdown(b: EmailBooking): string {
     [nightsLabel(b), money(b.nightly_subtotal)],
     ['GST (5%)', money(b.gst)],
     ['<b>Total</b>', `<b>${money(b.total)}</b>`],
-    ['Deposit (50%)', `${money(b.deposit_amount)} by e-transfer, or ${money(cardCharge(b))} by card (3% fee)`],
+    ['Deposit (50%)', cardOn(b)
+      ? `${money(b.deposit_amount)} by e-transfer, or ${money(cardCharge(b))} by card (3% fee)`
+      : `${money(b.deposit_amount)} by Interac e-transfer`],
     ['Balance due on arrival', money(balance(b))],
   ])
 }
@@ -88,8 +93,19 @@ function arrivalExtras(b: EmailBooking, emptyText: string | null): string {
   return `<p><b>Add-ons and fees paid on arrival:</b></p><ul>${lis}</ul>`
 }
 
-const DAMAGE_DEPOSIT_NOTE =
-  'Damage deposit: 3 days before your stay you will get a separate email to authorize a $500 per cabin hold on your card. It is a hold only, not a charge, and it is released after checkout if the shack is left in good condition.'
+function damageNote(b: EmailBooking): string {
+  return cardOn(b)
+    ? 'Damage deposit: 3 days before your stay you will get a separate email to authorize a $500 per cabin hold on your card. It is a hold only, not a charge, and it is released after checkout if the shack is left in good condition.'
+    : "Damage deposit: we'll arrange the $500 per cabin damage deposit with you before your stay. It's returned after checkout if the shack is left in good condition."
+}
+
+/** How to pay the deposit: card button + e-transfer, or e-transfer only while cards are off. */
+function payOptions(b: EmailBooking, payUrl: string, etransferEmail: string): string {
+  const etransfer = `e-transfer ${money(b.deposit_amount)} to ${e(etransferEmail)} (no additional fee, note your name + dates)`
+  return cardOn(b)
+    ? `<p>${button(payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>\n      <p>Or ${etransfer}.</p>`
+    : `<p><b>To pay:</b> send an Interac ${etransfer}. We'll confirm as soon as it lands.</p>`
+}
 
 // ─── Owner ───────────────────────────────────────────────────────────────────
 
@@ -149,8 +165,7 @@ export function guestPaymentReminder(
       <h2>Your dates are still on hold</h2>
       <p>Your stay ${e(dates(b))} is approved, but we haven't received your deposit yet.
         We're holding your dates until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time).</p>
-      <p>${button(l.payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>
-      <p>Or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      ${payOptions(b, l.payUrl, l.etransferEmail)}
       <p>Already paid by e-transfer? Thanks! We'll confirm as soon as it lands.</p>`,
   }
 }
@@ -168,8 +183,7 @@ export function guestBookingUpdated(
       ${arrivalExtras(b, null)}
       <p>Your dates are held until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time). Pay your 50% deposit to confirm.
         <b>Any earlier payment link no longer works</b>, so please use this one:</p>
-      <p>${button(l.payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>
-      <p>Or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      ${payOptions(b, l.payUrl, l.etransferEmail)}
       <p>Questions? Reply to this email.</p>`,
   }
 }
@@ -183,8 +197,7 @@ export function guestConfirmationMistake(
       <h2>Sorry, our mistake</h2>
       <p>Hi ${e(b.guest_name)}, we sent you a "booking confirmed" email by mistake. Your deposit for ${e(dates(b))} has <b>not been received yet</b>, so your booking isn't confirmed.</p>
       <p>Your dates are held until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time). Pay your 50% deposit to confirm:</p>
-      <p>${button(l.payUrl, `Pay ${money(cardCharge(b))} by card`)}</p>
-      <p>Or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      ${payOptions(b, l.payUrl, l.etransferEmail)}
       <p>Already sent it? Just reply to this email and we'll sort it out. Sorry for the confusion!</p>`,
   }
 }
@@ -202,7 +215,7 @@ export function guestPhoneBooking(b: EmailBooking, l: { waiverUrl: string; holdE
       <p><b>Two quick steps to lock it in:</b> sign the safety waiver, then pay your 50% deposit (${money(b.deposit_amount)}).
         Your dates are held until <b>${e(albertaDateTime(l.holdEndsAt))}</b> (Alberta time).</p>
       <p>${button(l.waiverUrl, 'Sign waiver and pay deposit')}</p>
-      <p>${DAMAGE_DEPOSIT_NOTE}</p>
+      <p>${damageNote(b)}</p>
       <p>Questions? Reply to this email.</p>`,
   }
 }
@@ -233,7 +246,7 @@ export function guestRequestReceived(b: EmailBooking, l: { statusUrl: string }):
       <ol>
         <li>We approve your request and email you a link to pay the 50% deposit.</li>
         <li>Your dates are held for 48 hours after approval. Paying the deposit confirms your stay.</li>
-        <li>${DAMAGE_DEPOSIT_NOTE}</li>
+        <li>${damageNote(b)}</li>
       </ol>
       <p>${button(l.statusUrl, 'View your booking')}</p>
       <p>Questions? Reply to this email.</p>`,
@@ -249,9 +262,9 @@ export function guestApproved(b: EmailBooking, l: { payUrl: string; etransferEma
       ${stayDetails(b)}
       ${priceBreakdown(b)}
       ${arrivalExtras(b, null)}
-      <p><a href="${e(l.payUrl)}">Pay by card</a> (${money(cardCharge(b))} incl. 3% fee) or e-transfer ${money(b.deposit_amount)} to ${e(l.etransferEmail)} (no additional fee, note your name + dates).</p>
+      ${payOptions(b, l.payUrl, l.etransferEmail)}
       <p>We hold your dates for 48 hours.</p>
-      <p><strong>Heads up:</strong> 3 days before your stay you'll receive a separate email to authorize a $500/cabin damage deposit hold on your card. It is a hold only, not a charge, and it is released after checkout if the shack is left in good condition. Watch for that email closer to your trip.</p>`,
+      <p><strong>Heads up:</strong> ${damageNote(b)}</p>`,
   }
 }
 
@@ -264,7 +277,7 @@ export function guestConfirmed(b: EmailBooking): Email {
       ${stayDetails(b)}
       <p>Remaining balance due on arrival: <b>${money(balance(b))}</b>.</p>
       ${arrivalExtras(b, null)}
-      <p>${DAMAGE_DEPOSIT_NOTE}</p>
+      <p>${damageNote(b)}</p>
       <p>We'll meet you at the lake and point you to your shack.</p>`,
   }
 }

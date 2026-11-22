@@ -75,6 +75,8 @@ function actionErrorMessage(error: string): string {
 // ---------------------------------------------------------------------------
 
 type Props = {
+  /** false until a live Stripe key is set (lib/payments-config.ts). */
+  cardPayments: boolean;
   cabins: CabinOption[];
   previewMode: boolean;
 };
@@ -83,7 +85,7 @@ type Props = {
 // Form component
 // ---------------------------------------------------------------------------
 
-export default function BookingForm({ cabins, previewMode }: Props) {
+export default function BookingForm({ cabins, previewMode, cardPayments }: Props) {
   const router = useRouter();
   const { min: seasonMin, max: seasonMax } = getSeasonWindow();
 
@@ -312,6 +314,7 @@ export default function BookingForm({ cabins, previewMode }: Props) {
           addons={selectedAddons}
           hasPet={hasPet}
           cabinCount={selectedCabinIds.length}
+          cardPayments={cardPayments}
         />
       )}
 

@@ -250,3 +250,33 @@ describe('ownerLoginLink', () => {
     expect(e.subject + e.html).not.toContain('\u2014')
   })
 })
+
+describe('with card payments switched off (no live Stripe key yet)', () => {
+  const noCard = { ...booking, card_payments: false }
+  const hold = new Date('2027-01-11T20:00:00Z')
+  const guestEmails = (): [string, t.Email][] => [
+    ['request received', t.guestRequestReceived(noCard, { statusUrl: 's' })],
+    ['approved', t.guestApproved(noCard, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com' })],
+    ['confirmed', t.guestConfirmed(noCard)],
+    ['payment reminder', t.guestPaymentReminder(noCard, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: hold })],
+    ['booking updated', t.guestBookingUpdated(noCard, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: hold })],
+    ['correction', t.guestConfirmationMistake(noCard, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com', holdEndsAt: hold })],
+    ['phone booking', t.guestPhoneBooking(noCard, { waiverUrl: 'https://x/w', holdEndsAt: hold })],
+  ]
+
+  it.each(guestEmails())('%s email never mentions paying by card', (_name, e) => {
+    expect(e.html).not.toMatch(/card/i)
+    expect(e.html).not.toContain('href="https://x/p"')
+  })
+
+  it('payment emails give the e-transfer address and amount instead', () => {
+    for (const [, e] of guestEmails().filter(([n]) => !['request received', 'confirmed', 'phone booking'].includes(n))) {
+      expect(e.html).toContain('pay@example.com')
+      expect(e.html).toContain('$367.50')
+    }
+  })
+
+  it('still offers card when switched on (the default)', () => {
+    expect(t.guestApproved(booking, { payUrl: 'https://x/p', etransferEmail: 'pay@example.com' }).html).toMatch(/by card/i)
+  })
+})

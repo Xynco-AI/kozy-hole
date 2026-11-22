@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createDamageDepositCheckout } from '@/lib/stripe'
+import { cardPaymentsOn } from '@/lib/payments-config'
 
 export async function GET(req: NextRequest) {
   const bookingId = req.nextUrl.searchParams.get('bookingId')
+  if (!cardPaymentsOn()) {
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/booking/${bookingId ?? ''}`)
+  }
   if (!bookingId) return new NextResponse('missing bookingId', { status: 400 })
 
   const db = supabaseAdmin()

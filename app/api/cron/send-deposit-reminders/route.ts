@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendDamageDepositRequest } from '@/lib/email'
+import { cardPaymentsOn } from '@/lib/payments-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,9 @@ export async function GET(req: NextRequest) {
   if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
     return new NextResponse('unauthorized', { status: 401 })
   }
+
+  // The damage deposit is a Stripe card hold; skip while card payments are off.
+  if (!cardPaymentsOn()) return NextResponse.json({ ok: true, sent: 0, skipped: 'card payments off' })
 
   const db = supabaseAdmin()
 

@@ -6,6 +6,7 @@ import Button from "@/components/Button";
 import { supabaseAdmin } from "@/lib/supabase";
 import { depositCardCents } from "@/lib/deposit-payment";
 import { etransferEmail } from "@/lib/settings";
+import { cardPaymentsOn } from "@/lib/payments-config";
 import { formatDate, parseLocalDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -113,6 +114,8 @@ export default async function BookingPage({
   );
 
   const status: string = (b.status ?? "").toUpperCase();
+  // Card payments are off until a live Stripe key is set: then only e-transfer is shown.
+  const cardOn = cardPaymentsOn();
 
   // ── REQUESTED ─────────────────────────────────────────────────────────────
   if (status === "REQUESTED") {
@@ -176,7 +179,7 @@ export default async function BookingPage({
                 <span className="font-semibold text-ink">
                   {money(depositAmount)}
                 </span>
-                ) to confirm your stay. Choose either option below.
+                ) to confirm your stay.{cardOn ? " Choose either option below." : " Pay by Interac e-transfer as shown below."}
               </p>
 
               {hasWaiver ? (
@@ -191,8 +194,9 @@ export default async function BookingPage({
                     </p>
                   )}
               {/* Payment options */}
-              <div className="mt-10 grid gap-6 sm:grid-cols-2">
+              <div className={cardOn ? "mt-10 grid gap-6 sm:grid-cols-2" : "mt-10 grid gap-6"}>
                 {/* Card */}
+                {cardOn && (
                 <div className="rounded-xl border border-hairline bg-surface-2/60 p-6">
                   <p className="mb-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-faint">
                     Option 1
@@ -228,11 +232,12 @@ export default async function BookingPage({
                     </p>
                   )}
                 </div>
+                )}
 
                 {/* E-transfer */}
                 <div className="rounded-xl border border-hairline bg-surface-2/60 p-6">
                   <p className="mb-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-faint">
-                    Option 2
+                    {cardOn ? "Option 2" : "How to pay"}
                   </p>
                   <p className="mb-4 text-base font-semibold text-ink">
                     Pay by e-transfer
@@ -334,9 +339,9 @@ export default async function BookingPage({
               </p>
               <p className="mt-3 leading-relaxed text-muted">
                 <span className="font-semibold text-ink">Damage deposit:</span>{" "}
-                3 days before your stay we&apos;ll email you a link to authorize a
-                $500 per cabin hold on your card. It&apos;s a hold, not a charge,
-                and it&apos;s released after checkout.
+                {cardOn
+                  ? "3 days before your stay we'll email you a link to authorize a $500 per cabin hold on your card. It's a hold, not a charge, and it's released after checkout."
+                  : "We'll arrange the $500 per cabin damage deposit with you before your stay. It's returned after checkout if the shack is left in good condition."}
               </p>
 
               {/* Meeting note */}

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getStripe, createDepositCheckout } from '@/lib/stripe'
 import { getDepositPayUrl } from '@/lib/deposit-payment'
 import { canPayDeposit } from '@/lib/owner-rules'
+import { cardPaymentsOn } from '@/lib/payments-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,9 @@ export async function GET(
   const db = supabaseAdmin()
   const { data: b } = await db.from('bookings').select('*, waivers(id)').eq('id', id).single()
   if (!b) return new NextResponse('Booking not found', { status: 404 })
+
+  // Card payments switched off (no live Stripe key yet): show the e-transfer instructions.
+  if (!cardPaymentsOn()) return NextResponse.redirect(`${site}/booking/${id}`)
 
   // Phone bookings: the guest must sign the waiver before any payment is taken.
   if (b.status === 'APPROVED' && !canPayDeposit({ status: b.status, hasWaiver: (b.waivers?.length ?? 0) > 0 })) {

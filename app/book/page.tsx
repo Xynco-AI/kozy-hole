@@ -7,6 +7,7 @@ import BookingForm from "@/components/BookingForm";
 import { supabaseAnon } from "@/lib/supabase";
 import { cabins as contentCabins } from "@/lib/content";
 import type { CabinOption } from "@/components/booking/CabinPicker";
+import { cardPaymentsOn } from "@/lib/payments-config";
 
 export const metadata: Metadata = {
   title: "Book a Cabin",
@@ -58,7 +59,7 @@ export default async function BookPage() {
 
         {/* Form */}
         <Container className="py-14 sm:py-20" size="narrow">
-          <BookingForm cabins={cabins} previewMode={previewMode} />
+          <BookingForm cabins={cabins} previewMode={previewMode} cardPayments={cardPaymentsOn()} />
         </Container>
       </main>
 

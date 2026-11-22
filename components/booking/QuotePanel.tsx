@@ -9,6 +9,8 @@ type Props = {
   addons: string[];
   hasPet: boolean;
   cabinCount: number;
+  /** false until a live Stripe key is set: then only e-transfer is shown. */
+  cardPayments: boolean;
 };
 
 function Row({
@@ -38,7 +40,7 @@ function Row({
   );
 }
 
-export default function QuotePanel({ quote: q, addons, hasPet, cabinCount }: Props) {
+export default function QuotePanel({ quote: q, addons, hasPet, cabinCount, cardPayments }: Props) {
   const extras = arrivalItems({ addons, hasPet });
 
   return (
@@ -66,7 +68,9 @@ export default function QuotePanel({ quote: q, addons, hasPet, cabinCount }: Pro
             <span className="font-semibold text-amber tabular-nums">{money(q.deposit)}</span>
           </div>
           <p className="mt-1 text-xs text-muted">
-            {money(q.cardCharge)} by card (incl. 3% fee) or {money(q.etransferCharge)} by e-transfer
+            {cardPayments
+              ? `${money(q.cardCharge)} by card (incl. 3% fee) or ${money(q.etransferCharge)} by e-transfer`
+              : `${money(q.etransferCharge)} by Interac e-transfer`}
           </p>
         </div>
       </div>
@@ -87,8 +91,9 @@ export default function QuotePanel({ quote: q, addons, hasPet, cabinCount }: Pro
       </div>
 
       <p className="mt-4 text-[0.8rem] leading-relaxed text-muted">
-        $500/cabin damage deposit: a card hold (not a charge) you authorize online 3 days
-        before your stay, released after checkout.
+        {cardPayments
+          ? "$500/cabin damage deposit: a card hold (not a charge) you authorize online 3 days before your stay, released after checkout."
+          : "$500/cabin damage deposit: arranged with us before your stay, returned after checkout."}
       </p>
     </div>
   );

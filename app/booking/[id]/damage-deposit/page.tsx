@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Container from "@/components/Container";
 import Button from "@/components/Button";
+import { cardPaymentsOn } from "@/lib/payments-config";
 import { supabaseAdmin } from "@/lib/supabase";
 import { formatDate } from "@/lib/dates";
 
@@ -37,6 +38,9 @@ export default async function DamageDepositPage({
   const cabinCount = count ?? 1;
   const depositTotal = cabinCount * 500;
   const alreadyAuthorized = b.damage_deposit_status === "authorized";
+  // The hold is a Stripe card authorization; until card payments are on, the owner
+  // arranges the damage deposit directly, so send guests back to their booking.
+  if (!cardPaymentsOn() && !alreadyAuthorized) redirect(`/booking/${id}`);
 
   return (
     <>
