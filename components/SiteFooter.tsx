@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import Container from "./Container";
 import { business, contact, footer, nav } from "@/lib/content";
 
@@ -106,6 +107,13 @@ export default function SiteFooter() {
           <p>{footer.rightsLine}</p>
           <p>Season {business.season} · Pet-friendly</p>
           <p>
+            <Link
+              href="/owner"
+              rel="nofollow"
+              className="mr-4 text-faint transition-colors hover:text-ice"
+            >
+              Owner login
+            </Link>
             Made by{" "}
             <a
               href="https://xynco.io"
