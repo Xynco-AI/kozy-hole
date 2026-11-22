@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeEqual } from '@/lib/tokens'
+import { getOwnerEmail } from '@/lib/owner-session'
 import { sendConfirmation, sendCancellation, sendGuestBookingUpdated, sendGuestConfirmationMistake, sendGuestPhoneBooking } from '@/lib/email'
 import { generateToken } from '@/lib/tokens'
 import { canUndoEtransfer, parsePhoneBooking } from '@/lib/owner-rules'
@@ -26,7 +27,7 @@ export async function ownerEditBooking(formData: FormData): Promise<{ notice: st
   const checkIn = String(formData.get('checkIn') ?? '')
   const checkOut = String(formData.get('checkOut') ?? '')
   const cabinIds = [...new Set(formData.getAll('cabinIds').map(String))]
-  if (!secretOk(secret) || !bookingId) return { notice: 'error' }
+  if (!(await ownerOk(secret)) || !bookingId) return { notice: 'error' }
 
   let notice = 'error'
   try {
@@ -77,7 +78,7 @@ export async function ownerEditBooking(formData: FormData): Promise<{ notice: st
 
   // Returned to the form (not a redirect) so a failed save keeps what Rob typed.
   if (!noticeFor(notice).ok) return { notice }
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
   return { notice }
 }
 
@@ -89,7 +90,7 @@ export async function undoEtransfer(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
   const notifyGuest = formData.get('notifyGuest') === 'on'
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   let notice = 'error'
   try {
@@ -126,8 +127,8 @@ export async function undoEtransfer(formData: FormData): Promise<void> {
     console.error('undoEtransfer failed', e)
   }
 
-  revalidatePath('/owner/' + secret)
-  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
+  revalidatePath(dashPath(secret))
+  redirect(`${dashPath(secret)}?notice=${encodeURIComponent(notice)}`) // must be outside try/catch
 }
 
 // ─── ownerCreatePhoneBooking ──────────────────────────────────────────────────
@@ -135,7 +136,7 @@ export async function undoEtransfer(formData: FormData): Promise<void> {
 // with no waiver: the guest is emailed a link to sign it, then pay (migration 0009).
 export async function ownerCreatePhoneBooking(formData: FormData): Promise<{ notice: string }> {
   const secret = formData.get('secret') as string | null
-  if (!secretOk(secret)) return { notice: 'error' }
+  if (!(await ownerOk(secret))) return { notice: 'error' }
 
   let notice = 'error'
   try {
@@ -190,7 +191,7 @@ export async function ownerCreatePhoneBooking(formData: FormData): Promise<{ not
 
   // Returned to the form (not a redirect) so a failed save keeps what Rob typed.
   if (!noticeFor(notice).ok) return { notice }
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
   return { notice }
 }
 
@@ -198,7 +199,7 @@ export async function ownerCreatePhoneBooking(formData: FormData): Promise<{ not
 export async function resendWaiverEmail(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   let notice = 'error'
   try {
@@ -213,21 +214,32 @@ export async function resendWaiverEmail(formData: FormData): Promise<void> {
     console.error('resendWaiverEmail failed', e)
   }
 
-  revalidatePath('/owner/' + secret)
-  redirect(`/owner/${secret}?notice=${encodeURIComponent(notice)}`)
+  revalidatePath(dashPath(secret))
+  redirect(`${dashPath(secret)}?notice=${encodeURIComponent(notice)}`)
 }
 
-function secretOk(secret: string | null): boolean {
+// Access: a logged-in owner (email login, lib/owner-session.ts) OR the old secret dashboard
+// link, which keeps working until OWNER_DASHBOARD_SECRET is retired.
+function legacySecretOk(secret: string | null): boolean {
   const env = process.env.OWNER_DASHBOARD_SECRET
   if (!env || !secret) return false
   return safeEqual(secret, env)
+}
+
+async function ownerOk(secret: string | null): Promise<boolean> {
+  return legacySecretOk(secret) || (await getOwnerEmail()) !== null
+}
+
+/** Where to send the owner back to: the old secret link they used, or /owner/dashboard. */
+function dashPath(secret: string | null): string {
+  return legacySecretOk(secret) ? `/owner/${secret}` : '/owner/dashboard'
 }
 
 // ─── ownerApprove ─────────────────────────────────────────────────────────────
 export async function ownerApprove(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   try {
     await approveBooking(bookingId)
@@ -235,14 +247,14 @@ export async function ownerApprove(formData: FormData): Promise<void> {
     // swallow — UI will be stale until next refresh
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }
 
 // ─── ownerDecline ─────────────────────────────────────────────────────────────
 export async function ownerDecline(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   try {
     await declineBooking(bookingId)
@@ -250,14 +262,14 @@ export async function ownerDecline(formData: FormData): Promise<void> {
     // swallow
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }
 
 // ─── confirmEtransfer ─────────────────────────────────────────────────────────
 export async function confirmEtransfer(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   try {
     const db = supabaseAdmin()
@@ -276,14 +288,14 @@ export async function confirmEtransfer(formData: FormData): Promise<void> {
     // DB failure — swallow, UI will be stale until next refresh
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }
 
 // ─── markCompleted ────────────────────────────────────────────────────────────
 export async function markCompleted(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   try {
     const db = supabaseAdmin()
@@ -296,14 +308,14 @@ export async function markCompleted(formData: FormData): Promise<void> {
     // swallow
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 export async function cancelBooking(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const bookingId = formData.get('bookingId') as string | null
-  if (!secretOk(secret) || !bookingId) return
+  if (!(await ownerOk(secret)) || !bookingId) return
 
   try {
     const db = supabaseAdmin()
@@ -322,14 +334,14 @@ export async function cancelBooking(formData: FormData): Promise<void> {
     // DB failure — swallow, UI will be stale until next refresh
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }
 
 // ─── approveReview ────────────────────────────────────────────────────────────
 export async function approveReview(formData: FormData): Promise<void> {
   const secret = formData.get('secret') as string | null
   const reviewId = formData.get('reviewId') as string | null
-  if (!secretOk(secret) || !reviewId) return
+  if (!(await ownerOk(secret)) || !reviewId) return
 
   try {
     const db = supabaseAdmin()
@@ -341,7 +353,7 @@ export async function approveReview(formData: FormData): Promise<void> {
     // swallow
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }
 
 // ─── blockDates ───────────────────────────────────────────────────────────────
@@ -351,7 +363,7 @@ export async function blockDates(formData: FormData): Promise<void> {
   const startDate = formData.get('startDate') as string | null
   const endDate = formData.get('endDate') as string | null
   const reason = formData.get('reason') as string | null
-  if (!secretOk(secret) || !cabinId || !startDate || !endDate) return
+  if (!(await ownerOk(secret)) || !cabinId || !startDate || !endDate) return
 
   try {
     const db = supabaseAdmin()
@@ -365,5 +377,5 @@ export async function blockDates(formData: FormData): Promise<void> {
     // swallow
   }
 
-  revalidatePath('/owner/' + secret)
+  revalidatePath(dashPath(secret))
 }

@@ -56,7 +56,7 @@ How a booking moves through the system:
 
 **Email content** lives in `lib/email-templates.ts` as pure, tested functions. `lib/email.ts` only loads the booking and sends. Add-on menu and prices are in `lib/addons.ts`; the stored label must stay stable because bookings store it.
 
-**Auth:** there are no user accounts for guests or the owner. Guests reach their booking, waiver and payment pages through emailed links keyed by the booking's UUID. The owner's dashboard is `/owner/<OWNER_DASHBOARD_SECRET>`, and the emailed approve/decline links use a per-booking `approval_token`. Compare secrets with `safeEqual()` from `lib/tokens.ts`, which is timing-safe.
+**Auth:** guests have no accounts; they reach their booking, waiver and payment pages through emailed links keyed by the booking's UUID. The owner logs in at `/owner` with a passwordless email link (migration `0010`): `lib/owner-auth.ts` holds the pure rules (allow-list from `OWNER_LOGIN_EMAILS`, else `OWNER_EMAIL`; SHA-256 hashing; rate limit), `lib/owner-session.ts` the cookie and DB side. Links expire in 15 minutes and work once (the emailed link opens `/owner/login/verify`, which needs a button press so email scanners can't burn it); sessions last 30 days. The dashboard lives in `app/owner/_dashboard/` and is served at `/owner/dashboard` (login) and `/owner/[secret]` (legacy `OWNER_DASHBOARD_SECRET` link, kept during the switchover). Every action in `_dashboard/actions.ts` re-checks access with `ownerOk()`. Emailed approve/decline links use a per-booking `approval_token`. Compare secrets with `safeEqual()` from `lib/tokens.ts`.
 
 **Email:** sent with Resend from the kozyhole.ca domain. Do not use em dashes in email copy; they were deliberately removed, and a test enforces it.
 

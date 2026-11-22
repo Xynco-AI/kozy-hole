@@ -339,3 +339,50 @@ describe('create_booking_request', () => {
     await expect(request('2027-01-15', '2027-01-17', [cabinA])).rejects.toThrow(/permission denied/)
   })
 })
+
+describe('owner login (migration 0010)', () => {
+  async function issue(tokenHash: string, minutesFromNow = 15, email = 'rob@example.com') {
+    await db.query(
+      `insert into owner_login_tokens (email, token_hash, expires_at) values ($1, $2, now() + make_interval(mins => $3))`,
+      [email, tokenHash, minutesFromNow])
+  }
+  async function login(tokenHash: string, sessionHash: string): Promise<string | null> {
+    const { rows } = await db.query<{ email: string | null }>(
+      `select owner_login(p_token_hash => $1, p_session_hash => $2, p_session_days => 30) as email`,
+      [tokenHash, sessionHash])
+    return rows[0].email
+  }
+  const sessions = async () => (await db.query<{ email: string; days: number }>(
+    `select email, round(extract(epoch from expires_at - now()) / 86400)::int as days from owner_sessions`)).rows
+
+  it('exchanges a valid link for a 30-day session', async () => {
+    await issue('tok1')
+    expect(await login('tok1', 'sess1')).toBe('rob@example.com')
+    expect(await sessions()).toEqual([{ email: 'rob@example.com', days: 30 }])
+  })
+
+  it('works only once', async () => {
+    await issue('tok1')
+    await login('tok1', 'sess1')
+    expect(await login('tok1', 'sess2')).toBeNull()
+    expect(await sessions()).toHaveLength(1)
+  })
+
+  it('refuses an expired link', async () => {
+    await issue('tok1', -1)
+    expect(await login('tok1', 'sess1')).toBeNull()
+    expect(await sessions()).toHaveLength(0)
+  })
+
+  it('refuses an unknown link', async () => {
+    expect(await login('nope', 'sess1')).toBeNull()
+  })
+
+  it('keeps login data away from the public anon key', async () => {
+    await issue('tok1')
+    await db.exec(`set role anon`)
+    await expect(db.query(`select * from owner_login_tokens`)).rejects.toThrow(/permission denied/)
+    await expect(db.query(`select * from owner_sessions`)).rejects.toThrow(/permission denied/)
+    await expect(login('tok1', 'sess1')).rejects.toThrow(/permission denied/)
+  })
+})

@@ -234,3 +234,19 @@ describe('guestPhoneBooking', () => {
     expect(e.html).toMatch(/Mon, Jan 11/)
   })
 })
+
+describe('ownerLoginLink', () => {
+  const e = t.ownerLoginLink({ loginUrl: 'https://x/owner/login/verify?token=abc' })
+  it('gives a login button and says it expires and works once', () => {
+    expect(e.subject).toMatch(/log ?in/i)
+    expect(e.html).toContain('href="https://x/owner/login/verify?token=abc"')
+    expect(e.html).toMatch(/15 minutes/)
+    expect(e.html).toMatch(/once/i)
+  })
+  it('tells the reader what to do if they did not ask for it', () => {
+    expect(e.html).toMatch(/didn.t ask/i)
+  })
+  it('has no em dashes', () => {
+    expect(e.subject + e.html).not.toContain('\u2014')
+  })
+})

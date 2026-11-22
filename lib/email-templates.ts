@@ -299,3 +299,16 @@ export function cancellation(b: EmailBooking): Email {
       <p>We hope to host you another time at Kozy Hole!</p>`,
   }
 }
+
+/** One-time login link for the owner dashboard (kozyhole.ca/owner). */
+export function ownerLoginLink(l: { loginUrl: string }): Email {
+  return {
+    subject: 'Your Kozy Hole dashboard login link',
+    html: `
+      <h2>Log in to your dashboard</h2>
+      <p>Tap the button below to log in to the Kozy Hole owner dashboard. This device will stay logged in for 30 days.</p>
+      <p>${button(l.loginUrl, 'Log in to dashboard')}</p>
+      <p>The link works once and expires in 15 minutes. If it has expired, just ask for a new one at kozyhole.ca/owner.</p>
+      <p style="color:#666">Didn't ask to log in? You can ignore this email. Nobody can log in without this link.</p>`,
+  }
+}

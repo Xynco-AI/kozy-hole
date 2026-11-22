@@ -65,7 +65,7 @@ export async function sendOwnerPendingReminder(bookingIds: string[]) {
   if (bookingIds.length === 0) return
   const bookings = await Promise.all(bookingIds.map(getBooking))
   await send(process.env.OWNER_EMAIL!, templates.ownerPendingReminder(bookings, {
-    dashboardUrl: `${site}/owner/${process.env.OWNER_DASHBOARD_SECRET}`,
+    dashboardUrl: `${site}/owner`,
   }), 'sendOwnerPendingReminder', bookingIds.join(','))
 }
 
@@ -107,4 +107,8 @@ export async function sendGuestHoldExpired(bookingId: string) {
 export async function sendCancellation(bookingId: string) {
   const b = await getBooking(bookingId)
   await send(b.email, templates.cancellation(b), 'sendCancellation', bookingId)
+}
+
+export async function sendOwnerLoginLink(email: string, loginUrl: string) {
+  await send(email, templates.ownerLoginLink({ loginUrl }), 'sendOwnerLoginLink', '-')
 }
