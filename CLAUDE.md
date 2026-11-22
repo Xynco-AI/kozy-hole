@@ -29,7 +29,7 @@ Path alias `@/` maps to the project root, in both tsconfig and vitest.
 
 **Running locally touches production.** `.env.local` points at the live Supabase database and the real Resend key, and `OWNER_EMAIL` is the owner's real inbox. Anything you book, approve or cancel on `localhost` changes real data and can email Rob or guests. To test safely, override `OWNER_EMAIL` (and `NEXT_PUBLIC_SITE_URL`) in the shell before `next dev`, use far-future dates and your own email as the guest, and delete test bookings afterwards. `STRIPE_SECRET_KEY` in `.env.local` is a placeholder, so card payment fails locally (the pay page shows "Card payment isn't available"); a full Stripe test needs a real `sk_test_` key and `stripe listen --forward-to localhost:<port>/api/stripe/webhook`. Load extra env vars with `set -a; . <(tr -d '\r' < file)`; `node --env-file` breaks `next dev`.
 
-The project lives in OneDrive, which can lock files in `.next`; if a build fails once with odd errors, rebuild before debugging.
+The project lives in OneDrive, which can lock files in `.next`; if a build fails once with odd errors, rebuild before debugging. If `next dev` keeps serving old styles or code after edits (check the served CSS, not just the source), stop it, delete `.next/dev`, and restart.
 
 ## Architecture
 
