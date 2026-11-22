@@ -32,7 +32,7 @@ function bookedCabins(b: { booking_cabins?: BookedCabin[] }): { id: string; name
     .map((bc) => ({ id: bc.cabin_id, name: bc.cabins!.name }))
 }
 
-/** Shared by /owner/dashboard (email login) and /owner/[secret] (old link). */
+/** Page metadata for the owner dashboard (never indexed by search engines). */
 export const ownerPageMetadata: Metadata = {
   title: 'Owner Dashboard — Kozy Hole',
   robots: { index: false, follow: false },
@@ -90,11 +90,9 @@ function EmptyState({ message }: { message: string }) {
 function EditBookingForm({
   booking,
   cabins,
-  secret,
 }: {
   booking: { id: string; check_in: string; check_out: string; status: string; booking_cabins?: BookedCabin[] }
   cabins: { id: string; name: string }[]
-  secret: string
 }) {
   const current = bookedCabins(booking)
   const inputClass =
@@ -104,7 +102,6 @@ function EditBookingForm({
       <summary className="cursor-pointer text-muted hover:text-ink">Change dates or cabins</summary>
       <ActionForm action={ownerEditBooking} submitLabel="Save changes" className="mt-3 flex flex-col gap-3">
         <input type="hidden" name="bookingId" value={booking.id} />
-        <input type="hidden" name="secret" value={secret} />
         <div className="grid grid-cols-2 gap-2">
           <label className="flex flex-col gap-1 text-xs text-muted">
             Check-in
@@ -149,7 +146,7 @@ function waiverLabel(b: { waivers?: { id: string }[] }): string {
 }
 
 /** "New phone booking": Rob enters a booking taken by phone. */
-function PhoneBookingForm({ cabins, secret }: { cabins: { id: string; name: string }[]; secret: string }) {
+function PhoneBookingForm({ cabins }: { cabins: { id: string; name: string }[] }) {
   const input =
     'rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-ice/60'
   const label = 'flex flex-col gap-1 text-xs text-muted'
@@ -163,7 +160,6 @@ function PhoneBookingForm({ cabins, secret }: { cabins: { id: string; name: stri
         resetOnSuccess
         className="mt-4 flex flex-col gap-4"
       >
-        <input type="hidden" name="secret" value={secret} />
         <div className="grid gap-3 sm:grid-cols-2">
           <label className={label}>Guest name<input name="guestName" required minLength={2} className={input} /></label>
           <label className={label}>Email (waiver and payment link go here)<input name="email" type="email" required className={input} /></label>
@@ -205,15 +201,13 @@ function PhoneBookingForm({ cabins, secret }: { cabins: { id: string; name: stri
 
 
 /**
- * The owner dashboard. Callers MUST check access first (email login or the old secret
- * link); every action re-checks on the server too. `secret` is '' for logged-in owners.
+ * The owner dashboard. The caller (app/owner/dashboard/page.tsx) must check the email
+ * login first; every action in ./actions.ts re-checks it on the server too.
  */
 export default async function OwnerDashboard({
-  secret,
   noticeCode,
   ownerEmail,
 }: {
-  secret: string
   noticeCode?: string
   ownerEmail?: string
 }) {
@@ -322,7 +316,7 @@ export default async function OwnerDashboard({
           </p>
         )}
         <div className="flex flex-col gap-14">
-          <PhoneBookingForm cabins={cabins} secret={secret} />
+          <PhoneBookingForm cabins={cabins} />
 
           {/* ── 1. Pending requests ────────────────────────────────────────── */}
           <section>
@@ -349,14 +343,12 @@ export default async function OwnerDashboard({
                     <div className="flex flex-wrap gap-2">
                       <form action={ownerApprove}>
                         <input type="hidden" name="bookingId" value={b.id} />
-                        <input type="hidden" name="secret" value={secret} />
                         <Button type="submit" variant="primary" size="md">
                           Approve
                         </Button>
                       </form>
                       <form action={ownerDecline}>
                         <input type="hidden" name="bookingId" value={b.id} />
-                        <input type="hidden" name="secret" value={secret} />
                         <Button
                           type="submit"
                           variant="ghost"
@@ -367,7 +359,7 @@ export default async function OwnerDashboard({
                         </Button>
                       </form>
                     </div>
-                    <EditBookingForm booking={b} cabins={cabins} secret={secret} />
+                    <EditBookingForm booking={b} cabins={cabins} />
                   </Card>
                 ))}
               </div>
@@ -396,7 +388,7 @@ export default async function OwnerDashboard({
                     <div className="flex flex-wrap gap-2">
                       <ConfirmEtransferForm
                         bookingId={b.id}
-                        secret={secret}
+                       
                         guestName={b.guest_name}
                         amount={money(b.deposit_amount)}
                         hasWaiver={hasWaiver(b)}
@@ -404,15 +396,14 @@ export default async function OwnerDashboard({
                       {!hasWaiver(b) && (
                         <form action={resendWaiverEmail}>
                           <input type="hidden" name="bookingId" value={b.id} />
-                          <input type="hidden" name="secret" value={secret} />
                           <Button type="submit" variant="ghost" size="md">
                             Resend waiver email
                           </Button>
                         </form>
                       )}
-                      <CancelForm bookingId={b.id} secret={secret} />
+                      <CancelForm bookingId={b.id} />
                     </div>
-                    <EditBookingForm booking={b} cabins={cabins} secret={secret} />
+                    <EditBookingForm booking={b} cabins={cabins} />
                   </Card>
                 ))}
               </div>
@@ -441,13 +432,12 @@ export default async function OwnerDashboard({
                     </div>
                     <form action={markCompleted}>
                       <input type="hidden" name="bookingId" value={b.id} />
-                      <input type="hidden" name="secret" value={secret} />
                       <Button type="submit" variant="ghost" size="md">
                         Mark completed
                       </Button>
                     </form>
                     {canUndoEtransfer(b) && (
-                      <UndoEtransferForm bookingId={b.id} secret={secret} guestName={b.guest_name} />
+                      <UndoEtransferForm bookingId={b.id} guestName={b.guest_name} />
                     )}
                   </Card>
                 ))}
@@ -471,7 +461,6 @@ export default async function OwnerDashboard({
                     <p className="mb-4 text-sm leading-relaxed text-muted">{r.comment}</p>
                     <form action={approveReview}>
                       <input type="hidden" name="reviewId" value={r.id} />
-                      <input type="hidden" name="secret" value={secret} />
                       <Button type="submit" variant="secondary" size="md">
                         Approve review
                       </Button>
@@ -490,7 +479,6 @@ export default async function OwnerDashboard({
               <Card>
                 <p className="mb-5 text-sm font-semibold text-ink">Add a block</p>
                 <form action={blockDates} className="flex flex-col gap-4">
-                  <input type="hidden" name="secret" value={secret} />
 
                   <label className="flex flex-col gap-1.5">
                     <span className="text-[0.78rem] font-semibold uppercase tracking-wide text-muted">

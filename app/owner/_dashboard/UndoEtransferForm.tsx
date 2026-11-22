@@ -6,11 +6,9 @@ import { undoEtransfer } from './actions'
 /** "Undo: not paid yet" for an e-transfer marked received by mistake. */
 export default function UndoEtransferForm({
   bookingId,
-  secret,
   guestName,
 }: {
   bookingId: string
-  secret: string
   guestName: string
 }) {
   return (
@@ -28,7 +26,6 @@ export default function UndoEtransferForm({
         }}
       >
         <input type="hidden" name="bookingId" value={bookingId} />
-        <input type="hidden" name="secret" value={secret} />
         <label className="flex items-start gap-2 text-ink">
           <input type="checkbox" name="notifyGuest" defaultChecked className="mt-0.5 h-4 w-4 accent-[var(--color-ice)]" />
           <span>

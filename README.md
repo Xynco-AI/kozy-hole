@@ -42,7 +42,7 @@ Guests never create an account. Every page they need opens from a private link i
 
 ### For the owners
 - An **email alert** for every new request, with one-tap **Approve / Decline**, plus a reminder around 5 AM each day while any request is waiting
-- A private dashboard (`/owner/<secret>`, no login: the link is the key) to:
+- A private dashboard at **kozyhole.ca/owner** ("Owner login" in the footer). Owners log in with a one-time emailed link, no password, and stay logged in for 30 days. From it they can:
   - approve or decline requests
   - **take bookings by phone**: the guest is emailed to sign the waiver, then pay
   - **change dates or cabins** on any unpaid booking (the price updates, and the guest is emailed if already approved)

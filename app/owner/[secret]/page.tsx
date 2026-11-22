@@ -1,23 +1,8 @@
-import { notFound } from 'next/navigation'
-import type { Metadata } from 'next'
-import { safeEqual } from '@/lib/tokens'
-import OwnerDashboard, { ownerPageMetadata } from '../_dashboard/OwnerDashboard'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = ownerPageMetadata
-
-// The original secret-link dashboard. Kept working while the owner moves to the email
-// login at /owner; retire it by changing or removing OWNER_DASHBOARD_SECRET.
-export default async function SecretLinkDashboard({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ secret: string }>
-  searchParams: Promise<{ notice?: string }>
-}) {
-  const { secret } = await params
-  if (!process.env.OWNER_DASHBOARD_SECRET || !safeEqual(secret, process.env.OWNER_DASHBOARD_SECRET)) {
-    notFound()
-  }
-  return <OwnerDashboard secret={secret} noticeCode={(await searchParams).notice} />
+// The old secret-link dashboard (/owner/<OWNER_DASHBOARD_SECRET>) has been retired in
+// favour of the email login. Any /owner/<something> link, including old bookmarks and
+// old emails, now just goes to the login page. It grants no access by itself.
+export default function RetiredSecretLink() {
+  redirect('/owner')
 }

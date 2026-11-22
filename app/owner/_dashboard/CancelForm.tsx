@@ -5,10 +5,8 @@ import { cancelBooking } from './actions'
 
 export default function CancelForm({
   bookingId,
-  secret,
 }: {
   bookingId: string
-  secret: string
 }) {
   return (
     <form
@@ -18,7 +16,6 @@ export default function CancelForm({
       }}
     >
       <input type="hidden" name="bookingId" value={bookingId} />
-      <input type="hidden" name="secret" value={secret} />
       <Button
         type="submit"
         variant="ghost"

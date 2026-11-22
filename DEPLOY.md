@@ -44,7 +44,7 @@ The site is built and committed. These are the go-live steps, in order. Everythi
   | `STRIPE_WEBHOOK_SECRET` | from step 3 (after webhook is created) |
   | `RESEND_API_KEY` | from step 4 |
   | `OWNER_EMAIL` | `kozyhole@gmail.com` |
-  | `OWNER_DASHBOARD_SECRET` | a long random string — this IS the owner login URL |
+  | `OWNER_LOGIN_EMAILS` | optional: comma-separated emails allowed to log in to the dashboard (defaults to `OWNER_EMAIL`) |
   | `CRON_SECRET` | a long random string (required, or the cron is rejected) |
 - Deploy.
 
@@ -53,7 +53,7 @@ The site is built and committed. These are the go-live steps, in order. Everythi
 
 ## 7. Test, then go live
 - With Stripe in **test mode**, run a full booking: request → approve from the owner email → pay with a Stripe test card → confirm the booking flips to CONFIRMED and emails arrive.
-- The owner dashboard lives at `https://kozyhole.ca/owner/<OWNER_DASHBOARD_SECRET>` — bookmark it on Rob's phone.
+- The owner dashboard is at `https://kozyhole.ca/owner` (also linked as "Owner login" in the footer). Rob enters his email and taps the emailed login link; no password.
 - When happy, swap Stripe to **live keys** and update the webhook secret.
 
 ## Still to fill in before launch (waiting on Rob)

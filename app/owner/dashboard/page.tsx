@@ -13,5 +13,5 @@ export default async function LoggedInDashboard({
 }) {
   const ownerEmail = await getOwnerEmail()
   if (!ownerEmail) redirect('/owner')
-  return <OwnerDashboard secret="" ownerEmail={ownerEmail} noticeCode={(await searchParams).notice} />
+  return <OwnerDashboard ownerEmail={ownerEmail} noticeCode={(await searchParams).notice} />
 }
