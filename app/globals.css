@@ -190,3 +190,37 @@ body > * {
     transform: none;
   }
 }
+
+/* Clickable things show the pointing-hand cursor. Tailwind v4 resets buttons to the
+   arrow, so restore it here (in the base layer, so a cursor-* utility can still override). */
+@layer base {
+  a[href],
+  button:not(:disabled),
+  [role="button"],
+  summary,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Soft ice-blue glow on text links and expandable toggles. Buttons get theirs from
+   components/Button.tsx (marked .kh-btn), so they're excluded here. */
+a[href]:not(.kh-btn),
+summary {
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+a[href]:not(.kh-btn):hover,
+summary:hover {
+  text-shadow: 0 0 12px rgba(92, 198, 236, 0.55);
+}

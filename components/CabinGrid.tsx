@@ -27,7 +27,7 @@ export default function CabinGrid({ cabins }: { cabins: Cabin[] }) {
         {cabins.map((cabin, i) => (
           <article
             key={cabin.slug}
-            className="group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-surface transition-all duration-300 hover:-translate-y-1.5 hover:border-ice/30 hover:shadow-[0_30px_60px_-30px_rgba(0,0,0,0.8)]"
+            className="group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-surface transition-all duration-300 hover:-translate-y-1.5 hover:border-ice/30 hover:shadow-[0_30px_60px_-30px_rgba(0,0,0,0.8),0_0_30px_rgba(92,198,236,0.28)]"
           >
             {/* Photo — clickable */}
             <button
@@ -106,7 +106,7 @@ export default function CabinGrid({ cabins }: { cabins: Cabin[] }) {
             type="button"
             onClick={close}
             style={{ position: "fixed", top: 20, right: 20, zIndex: 10000 }}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-all hover:bg-black/80 hover:shadow-[0_0_16px_rgba(255,255,255,0.35)]"
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>

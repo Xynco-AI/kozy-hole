@@ -108,7 +108,7 @@ export default function SiteHeader() {
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:bg-white/[0.05] lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-hairline text-ink transition-all hover:border-ice/50 hover:bg-white/[0.05] hover:shadow-[0_0_16px_rgba(92,198,236,0.4)] lg:hidden"
           >
             <svg
               width="20"

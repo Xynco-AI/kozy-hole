@@ -135,7 +135,7 @@ export default function ReviewForm() {
               aria-label={`${n} star${n > 1 ? "s" : ""}`}
               onClick={() => setRating(n)}
               onMouseEnter={() => setHover(n)}
-              className={`rounded-md p-0.5 transition-transform hover:scale-110 ${
+              className={`rounded-md p-0.5 transition-all hover:scale-110 hover:drop-shadow-[0_0_6px_rgba(232,133,43,0.85)] ${
                 n <= active ? "text-amber" : "text-faint/40"
               }`}
             >

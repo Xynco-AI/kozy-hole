@@ -5,7 +5,7 @@ type Variant = "primary" | "secondary" | "ghost";
 type Size = "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full font-sans font-semibold tracking-tight " +
+  "kh-btn inline-flex items-center justify-center gap-2 rounded-full font-sans font-semibold tracking-tight " +
   "transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 " +
   "focus-visible:outline-ice disabled:cursor-not-allowed disabled:opacity-50 select-none whitespace-nowrap";
 
@@ -13,14 +13,15 @@ const variants: Record<Variant, string> = {
   // Sunset amber — the headline action. Warm glow on hover.
   primary:
     "bg-amber text-[#1a0e02] shadow-[0_8px_30px_-12px_rgba(232,133,43,0.7)] " +
-    "hover:bg-amber-deep hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-12px_rgba(232,133,43,0.85)] active:translate-y-0",
+    "hover:bg-amber-deep hover:-translate-y-0.5 hover:shadow-[0_0_0_3px_rgba(232,133,43,0.2),0_0_32px_rgba(232,133,43,0.7)] active:translate-y-0",
   // Ice-blue outline — secondary action.
   secondary:
     "border border-ice/40 text-ice bg-ice-soft/40 backdrop-blur-sm " +
-    "hover:border-ice/70 hover:bg-ice-soft hover:-translate-y-0.5 active:translate-y-0",
+    "hover:border-ice/70 hover:bg-ice-soft hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(92,198,236,0.5)] active:translate-y-0",
   // Quiet text-only action.
   ghost:
-    "text-muted hover:text-ink hover:bg-white/[0.04] border border-transparent",
+    // Glow takes the text colour, so a red "Cancel" glows red.
+    "text-muted hover:text-ink hover:bg-white/[0.04] border border-transparent hover:shadow-[0_0_18px_-4px_currentColor]",
 };
 
 const sizes: Record<Size, string> = {

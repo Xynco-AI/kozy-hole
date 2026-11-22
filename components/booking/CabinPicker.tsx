@@ -45,7 +45,7 @@ export default function CabinPicker({ cabins, selected, onChange }: Props) {
               "group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border text-left transition-all duration-200",
               isSelected
                 ? "border-ice bg-ice-soft shadow-[0_0_0_1px_var(--color-ice)]"
-                : "border-[var(--color-hairline)] bg-surface hover:border-ice/40 hover:bg-surface-2",
+                : "border-[var(--color-hairline)] bg-surface hover:border-ice/40 hover:bg-surface-2 hover:shadow-[0_0_26px_rgba(92,198,236,0.3)]",
             ].join(" ")}
           >
             {/* Photo */}

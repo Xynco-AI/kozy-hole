@@ -294,7 +294,10 @@ export default async function OwnerDashboard({
           {ownerEmail ? (
             <form action={logout} className="flex items-center gap-3">
               <span className="hidden text-xs text-muted sm:inline">{ownerEmail}</span>
-              <button type="submit" className="rounded-full border border-hairline px-3 py-1 text-xs text-muted hover:text-ink">
+              <button
+                type="submit"
+                className="rounded-full border border-hairline px-3 py-1 text-xs text-muted transition-all duration-200 hover:border-ice/60 hover:bg-ice/10 hover:text-ice hover:shadow-[0_0_14px_rgba(92,198,236,0.45)] focus-visible:border-ice/60 focus-visible:text-ice focus-visible:shadow-[0_0_14px_rgba(92,198,236,0.45)] focus-visible:outline-none active:scale-95"
+              >
                 Log out
               </button>
             </form>
